@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" style="background-color: #0d1117; color: #e6edf3;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>compile&amp;rank — Placement &amp; Competitive Test Prep</title>
+    <meta name="description" content="Unlimited non-repeating practice tests across Python, Java, C, C++, HTML/CSS, CRT Aptitude, General Knowledge, NEET, and JEE Mains with detailed explanations and global Firebase leaderboards." />
+    <meta property="og:title" content="compile&amp;rank — Placement &amp; Competitive Test Prep" />
+    <meta property="og:description" content="Unlimited non-repeating practice tests across Python, Java, C, C++, HTML/CSS, CRT Aptitude, General Knowledge, NEET, and JEE Mains with detailed explanations and global Firebase leaderboards." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body style="background-color: #0d1117; color: #e6edf3; margin: 0;">
+    <div id="root"></div>
+    <script>
+      window.addEventListener('error', function (e) {
+        if (e && e.target && e.target.tagName === 'SCRIPT') {
+          if (!sessionStorage.getItem('__cr_reloaded')) {
+            sessionStorage.setItem('__cr_reloaded', '1');
+            window.location.reload();
+          }
+        }
+      }, true);
+      setTimeout(function () {
+        if (!window.__APP_MOUNTED__ && !sessionStorage.getItem('__cr_reloaded')) {
+          sessionStorage.setItem('__cr_reloaded', '1');
+          window.location.reload();
+        }
+      }, 2500);
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,424 @@
+{
+  "accounts": {
+    "usr_praneeth_demo": {
+      "uid": "usr_praneeth_demo",
+      "email": "praneethdeva72@gmail.com",
+      "name": "Praneeth Deva",
+      "passwordHash": "6a893c57cb025074eae83fda8a1b2bc4eaa2669f053e5eb627804242d12fb42c",
+      "emailVerified": true,
+      "createdAt": 1793354331447
+    }
+  },
+  "tokens": {
+    "135f1edb9323e89451af44c62453156e465a4b4d470d8291": "usr_praneeth_demo",
+    "d9c8ffb10d7894b827fc7f32ed9c2a64dd8d2a378365069d": "usr_praneeth_demo",
+    "3e2490f62007362860263d83a40da52f699f7c2c6292933c": "usr_praneeth_demo"
+  },
+  "scores": {
+    "usr_aarav_sharma": {
+      "uid": "usr_aarav_sharma",
+      "name": "Aarav Sharma (IIT-B)",
+      "subjects": {
+        "python": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531385
+        },
+        "cpp": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531385
+        },
+        "c": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531385
+        },
+        "java": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531385
+        },
+        "crt": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531385
+        },
+        "jee": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531385
+        },
+        "html": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531385
+        }
+      },
+      "overallScore": 102,
+      "overallTotal": 105,
+      "overallPct": 97.14,
+      "subjectsCount": 7,
+      "updatedAt": 1793613531385
+    },
+    "usr_ananya_iyer": {
+      "uid": "usr_ananya_iyer",
+      "name": "Ananya Iyer (NIT-T)",
+      "subjects": {
+        "python": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531385
+        },
+        "java": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531386
+        },
+        "html": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531386
+        },
+        "crt": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        },
+        "gk": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        },
+        "c": {
+          "score": 13,
+          "total": 15,
+          "pct": 86.67,
+          "updatedAt": 1793613531386
+        }
+      },
+      "overallScore": 86,
+      "overallTotal": 90,
+      "overallPct": 95.56,
+      "subjectsCount": 6,
+      "updatedAt": 1793613531386
+    },
+    "usr_rohan_verma": {
+      "uid": "usr_rohan_verma",
+      "name": "Rohan Verma (BITS)",
+      "subjects": {
+        "cpp": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531386
+        },
+        "c": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531386
+        },
+        "jee": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        },
+        "python": {
+          "score": 13,
+          "total": 15,
+          "pct": 86.67,
+          "updatedAt": 1793613531386
+        },
+        "crt": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        }
+      },
+      "overallScore": 71,
+      "overallTotal": 75,
+      "overallPct": 94.67,
+      "subjectsCount": 5,
+      "updatedAt": 1793613531386
+    },
+    "usr_sneha_reddy": {
+      "uid": "usr_sneha_reddy",
+      "name": "Dr. Sneha Reddy (AIIMS)",
+      "subjects": {
+        "neet": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531386
+        },
+        "gk": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531386
+        },
+        "python": {
+          "score": 13,
+          "total": 15,
+          "pct": 86.67,
+          "updatedAt": 1793613531386
+        },
+        "crt": {
+          "score": 13,
+          "total": 15,
+          "pct": 86.67,
+          "updatedAt": 1793613531386
+        }
+      },
+      "overallScore": 56,
+      "overallTotal": 60,
+      "overallPct": 93.33,
+      "subjectsCount": 4,
+      "updatedAt": 1793613531386
+    },
+    "usr_karthik_nair": {
+      "uid": "usr_karthik_nair",
+      "name": "Karthik Nair (IIIT-H)",
+      "subjects": {
+        "python": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        },
+        "java": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        },
+        "cpp": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        },
+        "html": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        },
+        "c": {
+          "score": 13,
+          "total": 15,
+          "pct": 86.67,
+          "updatedAt": 1793613531386
+        }
+      },
+      "overallScore": 69,
+      "overallTotal": 75,
+      "overallPct": 92,
+      "subjectsCount": 5,
+      "updatedAt": 1793613531386
+    },
+    "usr_priya_menon": {
+      "uid": "usr_priya_menon",
+      "name": "Priya Menon (VIT)",
+      "subjects": {
+        "java": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531386
+        },
+        "html": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        },
+        "crt": {
+          "score": 13,
+          "total": 15,
+          "pct": 86.67,
+          "updatedAt": 1793613531386
+        },
+        "gk": {
+          "score": 13,
+          "total": 15,
+          "pct": 86.67,
+          "updatedAt": 1793613531386
+        }
+      },
+      "overallScore": 55,
+      "overallTotal": 60,
+      "overallPct": 91.67,
+      "subjectsCount": 4,
+      "updatedAt": 1793613531386
+    },
+    "usr_vikram_singh": {
+      "uid": "usr_vikram_singh",
+      "name": "Vikramaditya Singh",
+      "subjects": {
+        "gk": {
+          "score": 15,
+          "total": 15,
+          "pct": 100,
+          "updatedAt": 1793613531386
+        },
+        "crt": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        },
+        "python": {
+          "score": 12,
+          "total": 15,
+          "pct": 80,
+          "updatedAt": 1793613531386
+        },
+        "jee": {
+          "score": 13,
+          "total": 15,
+          "pct": 86.67,
+          "updatedAt": 1793613531386
+        }
+      },
+      "overallScore": 54,
+      "overallTotal": 60,
+      "overallPct": 90,
+      "subjectsCount": 4,
+      "updatedAt": 1793613531386
+    },
+    "usr_divya_patel": {
+      "uid": "usr_divya_patel",
+      "name": "Divya Patel",
+      "subjects": {
+        "neet": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        },
+        "jee": {
+          "score": 13,
+          "total": 15,
+          "pct": 86.67,
+          "updatedAt": 1793613531386
+        },
+        "python": {
+          "score": 12,
+          "total": 15,
+          "pct": 80,
+          "updatedAt": 1793613531386
+        },
+        "html": {
+          "score": 13,
+          "total": 15,
+          "pct": 86.67,
+          "updatedAt": 1793613531386
+        }
+      },
+      "overallScore": 52,
+      "overallTotal": 60,
+      "overallPct": 86.67,
+      "subjectsCount": 4,
+      "updatedAt": 1793613531386
+    },
+    "usr_aditya_kulkarni": {
+      "uid": "usr_aditya_kulkarni",
+      "name": "Aditya Kulkarni",
+      "subjects": {
+        "c": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        },
+        "cpp": {
+          "score": 13,
+          "total": 15,
+          "pct": 86.67,
+          "updatedAt": 1793613531386
+        },
+        "java": {
+          "score": 12,
+          "total": 15,
+          "pct": 80,
+          "updatedAt": 1793613531386
+        }
+      },
+      "overallScore": 39,
+      "overallTotal": 45,
+      "overallPct": 86.67,
+      "subjectsCount": 3,
+      "updatedAt": 1793613531386
+    },
+    "usr_praneeth_demo": {
+      "uid": "usr_praneeth_demo",
+      "name": "Praneeth Deva",
+      "subjects": {
+        "python": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        },
+        "crt": {
+          "score": 13,
+          "total": 15,
+          "pct": 86.67,
+          "updatedAt": 1793613531386
+        },
+        "gk": {
+          "score": 14,
+          "total": 15,
+          "pct": 93.33,
+          "updatedAt": 1793613531386
+        }
+      },
+      "overallScore": 41,
+      "overallTotal": 45,
+      "overallPct": 91.11,
+      "subjectsCount": 3,
+      "updatedAt": 1793613531386
+    }
+  },
+  "attempts": {
+    "usr_praneeth_demo": [
+      {
+        "id": "att_1",
+        "subject": "gk",
+        "score": 14,
+        "total": 15,
+        "ts": 1793606331447
+      },
+      {
+        "id": "att_2",
+        "subject": "crt",
+        "score": 13,
+        "total": 15,
+        "ts": 1793570331447
+      },
+      {
+        "id": "att_3",
+        "subject": "python",
+        "score": 14,
+        "total": 15,
+        "ts": 1793512731447
+      }
+    ]
+  }
+}

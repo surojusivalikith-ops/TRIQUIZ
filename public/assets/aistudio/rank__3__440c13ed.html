@@ -1,0 +1,2075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>compile&rank — placement test prep</title>
+<style>
+:root{
+  --bg:#0d1117;
+  --panel:#12181f;
+  --panel-2:#161d26;
+  --line:#232b35;
+  --text:#e6edf3;
+  --muted:#7d8894;
+  --mono: 'JetBrains Mono','Fira Code',ui-monospace,Consolas,monospace;
+  --sans: 'Inter',ui-sans-serif,system-ui,sans-serif;
+  --accent:#00d9a0;
+  --accent-dim:#0a3d31;
+  --red:#ff6b6b;
+  --amber:#ffb454;
+  --py:#4b8bbe; --java:#e76f51; --c:#5da9e9; --cpp:#f28ab2; --html:#ff9d5c; --crt:#b48ce0; --gk:#6fcf97; --neet:#e0b04b; --jee:#5ce0c6;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);}
+body{min-height:100vh;background-image:
+  radial-gradient(circle at 15% 10%, rgba(0,217,160,0.06), transparent 40%),
+  radial-gradient(circle at 85% 90%, rgba(228,111,81,0.05), transparent 40%);}
+::selection{background:var(--accent);color:#04140f;}
+
+.app{max-width:920px;margin:0 auto;padding:28px 18px 80px;}
+
+/* terminal window chrome — signature element */
+.term{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 20px 60px -20px rgba(0,0,0,0.6);}
+.term-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel-2);border-bottom:1px solid var(--line);}
+.dot{width:10px;height:10px;border-radius:50%;}
+.dot.r{background:#ff5f57;} .dot.y{background:#febc2e;} .dot.g{background:#28c840;}
+.term-path{margin-left:10px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+.term-body{padding:26px 28px;}
+
+/* brand */
+.brand{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.brand-name{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:0.5px;}
+.brand-name .amp{color:var(--accent);}
+.brand-user{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;align-items:center;gap:12px;}
+.brand-user button{background:none;border:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;}
+.brand-user button:hover{color:var(--text);border-color:var(--muted);}
+
+h1.hero{font-family:var(--mono);font-size:26px;line-height:1.35;margin:0 0 6px;}
+h1.hero .cursor{display:inline-block;width:9px;height:20px;background:var(--accent);margin-left:4px;animation:blink 1s steps(1) infinite;vertical-align:-3px;}
+@keyframes blink{50%{opacity:0;}}
+p.sub{color:var(--muted);margin:0 0 26px;font-size:14px;}
+
+/* form */
+label{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);margin:14px 0 6px;text-transform:lowercase;}
+input{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:11px 12px;border-radius:7px;font-family:var(--mono);font-size:13px;outline:none;transition:border-color .15s;}
+input:focus{border-color:var(--accent);}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#04140f;border:none;font-family:var(--mono);font-weight:700;font-size:13px;padding:11px 20px;border-radius:7px;cursor:pointer;margin-top:18px;transition:transform .1s, box-shadow .15s;}
+.btn:hover{box-shadow:0 8px 24px -8px rgba(0,217,160,0.5);transform:translateY(-1px);}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:600;}
+.btn.ghost:hover{border-color:var(--muted);}
+.btn.small{padding:7px 14px;font-size:11px;margin-top:0;}
+.btn:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none;transform:none;}
+.err{color:var(--red);font-family:var(--mono);font-size:12px;margin-top:12px;min-height:14px;}
+.switch-line{margin-top:18px;font-size:12.5px;color:var(--muted);}
+.switch-line a{color:var(--accent);cursor:pointer;text-decoration:none;}
+.switch-line a:hover{text-decoration:underline;}
+
+/* subject grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:6px;}
+.card{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:18px;cursor:pointer;transition:border-color .15s, transform .12s;position:relative;overflow:hidden;}
+.card:hover{border-color:var(--accent-line,var(--accent));transform:translateY(-2px);}
+.card .tag{position:absolute;top:0;left:0;bottom:0;width:4px;}
+.card .lang{font-family:var(--mono);font-size:15px;font-weight:700;margin-bottom:4px;}
+.card .desc{color:var(--muted);font-size:12px;line-height:1.5;}
+.card .count{margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--muted);}
+.card .count b{color:var(--text);}
+
+/* quiz */
+.progressbar{height:5px;background:var(--panel-2);border-radius:3px;overflow:hidden;margin-bottom:22px;}
+.progressbar > div{height:100%;background:var(--accent);transition:width .2s linear;}
+.qmeta{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-bottom:14px;}
+.timer{color:var(--amber);}
+.timer.low{color:var(--red);}
+.qtext{font-size:17px;line-height:1.55;margin:0 0 20px;font-weight:600;}
+.opt{display:flex;align-items:flex-start;gap:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:13px 15px;margin-bottom:10px;cursor:pointer;font-size:14px;transition:border-color .12s, background .12s;}
+.opt:hover{border-color:var(--muted);}
+.opt.selected{border-color:var(--accent);background:rgba(0,217,160,0.07);}
+.opt.correct{border-color:var(--accent);background:rgba(0,217,160,0.12);}
+.opt.wrong{border-color:var(--red);background:rgba(255,107,107,0.1);}
+.opt .k{font-family:var(--mono);color:var(--muted);width:16px;flex-shrink:0;}
+.opt.correct .k, .opt.wrong .k{color:inherit;}
+.qfooter{display:flex;justify-content:space-between;align-items:center;margin-top:22px;}
+
+/* results */
+.score-hero{text-align:center;padding:10px 0 24px;}
+.score-num{font-family:var(--mono);font-size:56px;font-weight:700;color:var(--accent);line-height:1;}
+.score-of{color:var(--muted);font-family:var(--mono);font-size:14px;margin-top:6px;}
+.score-verdict{margin-top:10px;font-size:13px;color:var(--muted);}
+table.lb{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;}
+table.lb th{text-align:left;font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;padding:8px 10px;border-bottom:1px solid var(--line);}
+table.lb td{padding:10px;border-bottom:1px solid var(--line);}
+table.lb tr.me{background:rgba(0,217,160,0.07);}
+table.lb td.rank{font-family:var(--mono);color:var(--muted);width:36px;}
+table.lb td.rank.top1{color:#ffd166;} table.lb td.rank.top2{color:#c9d6df;} table.lb td.rank.top3{color:#d6a15a;}
+.nav-row{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;}
+
+.tabbar{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+.tab{font-family:var(--mono);font-size:12px;padding:7px 13px;border-radius:6px;border:1px solid var(--line);color:var(--muted);cursor:pointer;background:var(--panel-2);}
+.tab.active{color:var(--text);border-color:var(--accent);}
+
+.empty{color:var(--muted);font-size:13px;font-family:var(--mono);padding:20px 0;text-align:center;}
+.note{font-size:11.5px;color:var(--muted);margin-top:22px;border-top:1px dashed var(--line);padding-top:14px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+setTimeout(function(){
+  if(!window.__appBooted){
+    var r=document.getElementById('root');
+    if(r) r.innerHTML='<div style="max-width:560px;margin:60px auto;padding:20px;font-family:monospace;color:#ff6b6b;line-height:1.6">could not load the Firebase SDK from gstatic.com. Check your internet connection, disable any ad-blocker/VPN/firewall blocking Google domains, and make sure the page is served over http(s), not opened from file://.</div>';
+  }
+},6000);
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile, sendEmailVerification, sendPasswordResetEmail, reload, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, doc, updateDoc, collection, addDoc, getDocs, query, orderBy, limit, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* ---------------- data: question banks ---------------- */
+const SUBJECTS = [
+  {id:'python', label:'Python', color:'var(--py)', desc:'Syntax, data structures, core built-ins.'},
+  {id:'java', label:'Java', color:'var(--java)', desc:'OOP, JVM basics, collections.'},
+  {id:'c', label:'C', color:'var(--c)', desc:'Pointers, memory, standard library.'},
+  {id:'cpp', label:'C++', color:'var(--cpp)', desc:'STL, OOP extensions, memory model.'},
+  {id:'html', label:'HTML/CSS', color:'var(--html)', desc:'Markup, semantics, box model.'},
+  {id:'crt', label:'CRT Aptitude', color:'var(--crt)', desc:'Quant, logical reasoning, verbal.'},
+  {id:'gk', label:'General Knowledge', color:'var(--gk)', desc:'Current affairs, science, geography.'},
+  {id:'neet', label:'NEET', color:'var(--neet)', desc:'Physics, Chemistry, Biology — NEET-style.'},
+  {id:'jee', label:'JEE Mains', color:'var(--jee)', desc:'Physics, Chemistry, Maths — JEE-style.'},
+];
+
+function Q(text,opts,ans){return {text,opts,ans};}
+function QG(text,opts,ans,cat,exp){return {text,opts,ans,cat,exp};}
+
+const BANK = {
+python:[
+ Q("What is the output of `print(type([]))`?",["<class 'list'>","<class 'array'>","<class 'tuple'>","list"],0),
+ Q("Which keyword is used to define a function in Python?",["func","def","function","lambda"],1),
+ Q("What does `len('hello')` return?",["4","5","6","Error"],1),
+ Q("Which of these is immutable in Python?",["list","dict","tuple","set"],2),
+ Q("What is the output of `2 ** 3`?",["6","8","9","Error"],1),
+ Q("Which method adds an item to the end of a list?",["add()","append()","insert()","push()"],1),
+ Q("What does `range(5)` generate?",["0 to 5","1 to 5","0 to 4","1 to 4"],2),
+ Q("How do you start a comment in Python?",["//","#","/*","--"],1),
+ Q("What is the result of `10 // 3`?",["3.33","3","4","Error"],1),
+ Q("Which of the following creates a dictionary?",["{1,2,3}","[1,2,3]","{'a':1}","(1,2)"],2),
+ Q("What does `self` refer to in a class method?",["The class itself","The current instance","A global variable","A static method"],1),
+ Q("Which module is used for regular expressions?",["regex","re","pyregex","restring"],1),
+ Q("What is the output of `bool(0)`?",["True","False","0","Error"],1),
+ Q("Which function converts a string to an integer?",["int()","str()","float()","num()"],0),
+ Q("What is a lambda function?",["A named function","An anonymous inline function","A class method","A loop construct"],1),
+ Q("Which keyword is used for exception handling?",["catch","except","error","rescue"],1),
+ Q("What does `list[::-1]` do?",["Copies the list","Reverses the list","Sorts the list","Empties the list"],1),
+ Q("Which data structure uses LIFO order?",["Queue","Stack","List","Dictionary"],1),
+ Q("What is the output of `3 == 3.0`?",["True","False","Error","None"],0),
+ Q("Which method removes and returns the last item of a list?",["remove()","pop()","del()","clear()"],1),
+ Q("What is the correct file mode to open a file for appending?",["'r'","'w'","'a'","'x'"],2),
+ Q("What is the output of `'abc'.upper()`?",["abc","ABC","Abc","Error"],1),
+ Q("Which of these defines a set in Python?",["[]","{}","()","set{}"],1),
+ Q("What does the `is` operator check?",["Equality of values","Identity (same object)","Type match only","Membership"],1),
+ Q("What is the output of `len({1,2,2,3})`?",["4","3","2","Error"],1),
+ Q("Which built-in function returns the largest item in an iterable?",["max()","top()","highest()","big()"],0),
+ Q("What is a decorator in Python?",["A design pattern only","A function that modifies another function","A type of loop","A class attribute"],1),
+ Q("Which keyword creates a generator function?",["return","yield","gen","async"],1),
+ Q("What is the output of `3 + 4 * 2`?",["14","11","10","Error"],1),
+ Q("Which method converts a list to a set?",["list()","set()","tuple()","dict()"],1),
+ Q("What is the output of `'Hello'[1:4]`?",["Hel","ell","ello","Hell"],1),
+ Q("Which of these is used to define a class in Python?",["class","struct","object","def"],0),
+ Q("What does `__init__` do in a Python class?",["Deletes the object","Initializes a new object","Prints the object","Compares objects"],1),
+ Q("Which function checks if all characters in a string are digits?",["isdigit()","isnumeric()","isdecimal()","isint()"],0),
+ Q("What is the output of `[1,2,3] + [4,5]`?",["[1,2,3,4,5]","[5,7,8]","Error","[1,2,3,[4,5]]"],0),
+ Q("Which keyword is used to import a module?",["include","import","using","require"],1),
+ Q("What does `enumerate()` return?",["Only values","Only indices","Index-value pairs","A dictionary"],2),
+ Q("Which operator is used for exponentiation?",["^","**","exp","pow"],1),
+ Q("What is a Python tuple's key property?",["Mutable","Immutable","Unordered","Duplicates not allowed"],1),
+ Q("Which built-in function returns the number of items in an object?",["count()","len()","size()","length()"],1),
+ Q("What is the output of `type(3.0)`?",["<class 'int'>","<class 'float'>","<class 'double'>","<class 'number'>"],1),
+ Q("Which of these is a valid way to open a file for reading in Python?",["open('f.txt','r')","file('f.txt')","read('f.txt')","input('f.txt')"],0),
+ Q("What does list comprehension `[x*2 for x in range(3)]` produce?",["[0,2,4]","[0,1,2]","[2,4,6]","[1,2,3]"],0),
+ Q("Which exception is raised when dividing by zero?",["ValueError","ZeroDivisionError","ArithmeticError","TypeError"],1),
+ Q("What is the correct way to check if a key exists in a dict `d`?",["d.has(k)","k in d","d.contains(k)","d.exists(k)"],1),
+ Q("Which of these correctly copies a list without referencing the original?",["b = a","b = a.copy()","b = a[:0]","b = list"],1),
+ Q("What does the `pass` statement do?",["Exits a loop","Does nothing, acts as a placeholder","Skips one iteration","Raises an error"],1),
+ Q("Which function converts a value into a string?",["str()","string()","toStr()","cast()"],0),
+],
+java:[
+ Q("Which keyword is used to inherit a class in Java?",["implements","extends","inherits","super"],1),
+ Q("What is the default value of a boolean in Java?",["true","false","0","null"],1),
+ Q("Which method is the entry point of a Java program?",["start()","main()","run()","init()"],1),
+ Q("Java is platform independent because of:",["Compiler","JVM","JDK","IDE"],1),
+ Q("Which keyword prevents a class from being inherited?",["static","final","const","private"],1),
+ Q("What is the size of an int in Java?",["16 bit","32 bit","64 bit","8 bit"],1),
+ Q("Which collection does not allow duplicate elements?",["List","Set","ArrayList","LinkedList"],1),
+ Q("Which operator is used to create an object?",["new","create","malloc","instance"],0),
+ Q("Which of these is NOT a Java access modifier?",["public","private","protected","internal"],3),
+ Q("What is used to handle exceptions in Java?",["try-catch","if-else","switch-case","for-while"],0),
+ Q("Which of these is a marker interface?",["Runnable","Serializable","Comparable","Iterable"],1),
+ Q("What does JVM stand for?",["Java Virtual Machine","Java Verified Method","Java Variable Model","Java Visual Machine"],0),
+ Q("Which keyword is used to allocate memory for an array?",["alloc","new","malloc","create"],1),
+ Q("What is method overloading?",["Same method name, different parameters","Same method, same parameters","Overriding a parent method","Deleting a method"],0),
+ Q("Which of these is a checked exception?",["NullPointerException","IOException","ArithmeticException","ArrayIndexOutOfBoundsException"],1),
+ Q("What is the parent class of all classes in Java?",["Main","Object","Class","Super"],1),
+ Q("Which keyword is used to implement an interface?",["extends","implements","interface","abstract"],1),
+ Q("What is the use of the `super` keyword?",["Refers to static members","Refers to the parent class","Creates a new object","Defines a constant"],1),
+ Q("Which collection maintains key-value pairs?",["ArrayList","HashMap","HashSet","LinkedList"],1),
+ Q("What does the `static` keyword mean for a method?",["Belongs to instance","Belongs to the class, not instance","Cannot be called","Runs only once ever"],1),
+ Q("Which loop is best when the number of iterations is known?",["while","do-while","for","if"],2),
+ Q("What is autoboxing in Java?",["Manual type casting","Automatic conversion between primitive and wrapper types","Array resizing","Garbage collection"],1),
+ Q("Which of these is used for thread synchronization?",["synchronized","volatile only","static","final"],0),
+ Q("What is the output of integer division `7/2` in Java?",["3.5","3","4","Error"],1),
+ Q("Which keyword is used to define an abstract class?",["abstract","interface","virtual","final"],0),
+ Q("What does garbage collection do in Java?",["Deletes source code","Automatically frees unused memory","Compiles the program","Formats the disk"],1),
+ Q("Which package contains the core Java classes like String and Math?",["java.util","java.lang","java.io","java.net"],1),
+ Q("Which of these is used to create a constant in Java?",["const","final","static","readonly"],1),
+ Q("What is the output of `System.out.println(10 == 10.0)`?",["true","false","Compile error","Runtime error"],0),
+ Q("Which interface must a class implement to be used in a for-each loop?",["Iterable","Iterator","Comparable","Runnable"],0),
+ Q("What is the purpose of the `finally` block?",["Runs only if an exception occurs","Always executes after try/catch","Replaces catch","Runs before try"],1),
+ Q("Which of these is a wrapper class for `int`?",["Int","Integer","INT","IntWrapper"],1),
+ Q("What does the `instanceof` operator check?",["Variable type at compile time","Object type at runtime","Memory address","Method signature"],1),
+ Q("Which keyword is used to call a parent class constructor?",["this()","super()","parent()","base()"],1),
+ Q("What is encapsulation in Java?",["Hiding data using access modifiers","Multiple inheritance","Method overloading","Exception handling"],0),
+ Q("Which collection class maintains insertion order?",["HashSet","TreeSet","LinkedHashSet","HashMap"],2),
+ Q("What is the output of concatenating a String and an int with `+`?",["Compile error","Concatenated string","Sum of ASCII values","Runtime error"],1),
+ Q("Which keyword makes a variable accessible only within its class?",["public","protected","private","default"],2),
+ Q("What is a functional interface in Java?",["An interface with multiple methods","An interface with exactly one abstract method","A class with static methods","An abstract class"],1),
+ Q("Which of these is used for multi-threading in Java?",["Thread class","Runnable interface","Both Thread and Runnable","Process class"],2),
+ Q("What does `equals()` compare by default in the Object class?",["Field values","Reference/memory address","Hash code only","Class name"],1),
+ Q("Which keyword is used to handle multiple exception types in one catch block (Java 7+)?",["|","&&","or","catch-all"],0),
+ Q("What is the time complexity of accessing an element in an ArrayList by index?",["O(1)","O(n)","O(log n)","O(n^2)"],0),
+ Q("Which of these correctly declares a generic class?",["class Box<T>","class Box[T]","class Box(T)","class Box{T}"],0),
+ Q("What does the `transient` keyword do?",["Prevents serialization of a field","Makes a variable constant","Makes a method abstract","Improves performance"],0),
+ Q("Which method is used to compare two strings for equality?",["==","equals()","compareTo() only","matches()"],1),
+ Q("What is the default capacity of an ArrayList in Java?",["0","10","16","100"],1),
+],
+c:[
+ Q("Which header file is required for printf()?",["<stdlib.h>","<stdio.h>","<string.h>","<math.h>"],1),
+ Q("What is the size of `int` typically in C (32-bit systems)?",["2 bytes","4 bytes","8 bytes","1 byte"],1),
+ Q("Which operator is used to get the address of a variable?",["*","&","#","%"],1),
+ Q("What does `malloc()` do?",["Frees memory","Allocates memory dynamically","Copies memory","Compares memory"],1),
+ Q("Which of these is a valid C variable name?",["2value","_value","value-1","value 1"],1),
+ Q("What is the output of `printf(\"%d\", 5/2)`?",["2.5","2","3","Error"],1),
+ Q("Which loop is guaranteed to execute at least once?",["for","while","do-while","if"],2),
+ Q("What does `sizeof(char)` return?",["1","2","4","Depends on compiler"],0),
+ Q("Which symbol is used for a pointer declaration?",["&","*","#","$"],1),
+ Q("What is the correct way to declare a constant in C?",["let x = 5","const int x = 5;","final int x = 5;","int const x = 5"],1),
+ Q("Which function is used to free dynamically allocated memory?",["delete()","remove()","free()","clear()"],2),
+ Q("What is a NULL pointer?",["Pointer to 0 value","Pointer pointing to nothing","Uninitialized pointer","Pointer to a function"],1),
+ Q("Which function is used to read a string with spaces from input?",["scanf()","gets()/fgets()","read()","getchar() alone"],1),
+ Q("What does the `static` keyword do to a local variable?",["Deletes it after function ends","Preserves its value between calls","Makes it global","Makes it constant"],1),
+ Q("Which operator has the highest precedence?",["+","*","()","="],2),
+ Q("What is a structure (`struct`) used for?",["Grouping different data types together","Looping","Pointer arithmetic","Memory deallocation"],0),
+ Q("Which function compares two strings in C?",["strcmp()","strcompare()","compare()","equals()"],0),
+ Q("What is the output of `1 && 0` in C?",["1","0","true","Error"],1),
+ Q("Which of these correctly declares a function pointer?",["int fp();","int *fp;","int (*fp)(int);","pointer int fp;"],2),
+ Q("What does `#define` do?",["Declares a variable","Defines a macro/constant","Includes a file","Defines a function"],1),
+ Q("Which storage class has the smallest scope by default?",["extern","static","auto","register"],2),
+ Q("What is the result of `sizeof(int*)` typically on a 64-bit system?",["4 bytes","8 bytes","2 bytes","Depends on int size"],1),
+ Q("Which function is used to dynamically resize allocated memory?",["resize()","realloc()","recalloc()","remalloc()"],1),
+ Q("What does `argc` represent in `main(int argc, char *argv[])`?",["Argument count","Argument character","Array count","Argument class"],0),
+ Q("Which operator is used for modulus (remainder)?",["/","%","//","mod"],1),
+ Q("What happens when you dereference a NULL pointer?",["Returns 0","Compiler error","Undefined behavior / crash","Returns NULL"],2),
+ Q("Which operator is used to access a structure member through a pointer?",[".","->","::","&"],1),
+ Q("What is the output of `sizeof('a')` in C?",["1","2","4","Depends on compiler"],2),
+ Q("Which function is used to concatenate two strings?",["strcat()","strcpy()","strlen()","strcmp()"],0),
+ Q("What does the `volatile` keyword indicate?",["Variable can change unexpectedly, prevent optimization","Variable is constant","Variable is static","Variable is global only"],0),
+ Q("Which of these correctly declares a 2D array in C?",["int a[3][4];","int a(3,4);","array a[3][4];","int a[3,4];"],0),
+ Q("What is the output of `printf(\"%d\", 'A')`?",["A","65","Error","97"],1),
+ Q("Which function reads a single character from input?",["getchar()","readchar()","scanchar()","inputchar()"],0),
+ Q("What does `EOF` represent?",["End of File marker","A file type","A function","An error code always -2"],0),
+ Q("Which storage class keyword makes a variable retain its value across function calls?",["auto","register","static","extern"],2),
+ Q("What happens if you don't initialize a local variable in C?",["It's set to 0","It's set to NULL","It contains garbage value","Compile error"],2),
+ Q("Which operator is used for bitwise AND?",["&&","&","AND","and"],1),
+ Q("What is a union in C?",["Same as struct but shares memory among members","A pointer type","A loop construct","A type of array"],0),
+ Q("Which function is used to duplicate a string dynamically?",["strdup()","strcopy()","strclone()","dupstr()"],0),
+ Q("What does `typedef` do?",["Deletes a type","Creates an alias for a type","Defines a macro","Declares a constant"],1),
+ Q("Which of these is the correct format specifier for a float in printf?",["%d","%f","%s","%c"],1),
+ Q("What is recursion?",["A function calling itself","A loop with two conditions","A pointer to a pointer","A type of array"],0),
+ Q("Which operator has right-to-left associativity?",["+","=","*","/"],1),
+ Q("What does `calloc()` do differently from `malloc()`?",["Allocates and zero-initializes memory","Frees memory","Allocates less memory","Nothing, they're identical"],0),
+ Q("Which header file contains `malloc()` and `free()`?",["<stdio.h>","<stdlib.h>","<string.h>","<memory.h>"],1),
+ Q("What is the output of `5 & 3` in C (bitwise AND)?",["1","7","8","5"],0),
+],
+cpp:[
+ Q("Which feature allows a function to behave differently based on arguments?",["Inheritance","Polymorphism","Encapsulation","Function overloading"],3),
+ Q("What is the default access specifier in a C++ class?",["public","private","protected","none"],1),
+ Q("Which operator is used for dynamic memory allocation in C++?",["malloc","new","alloc","create"],1),
+ Q("What is a constructor?",["A function that destroys objects","A special method called on object creation","A loop","A variable"],1),
+ Q("Which STL container stores unique sorted elements?",["vector","set","list","map"],1),
+ Q("What does `virtual` keyword enable?",["Static binding","Dynamic/runtime polymorphism","Faster compilation","Memory management"],1),
+ Q("Which of these supports multiple inheritance?",["Java","Python","C++","C#"],2),
+ Q("What is the scope resolution operator?",["::","->",".","::*"],0),
+ Q("Which STL container is a key-value pair structure?",["vector","map","stack","queue"],1),
+ Q("What does RAII stand for conceptually?",["Resource acquisition is initialization","Runtime array index initialization","Random access iterator interface","Resource access is inherited"],0),
+ Q("Which keyword is used to prevent function overriding?",["static","final","const","sealed"],1),
+ Q("What is the output type of `cout`?",["Input stream","Output stream","File stream","String stream"],1),
+ Q("What is a destructor used for?",["Creating objects","Cleaning up resources when an object is destroyed","Copying objects","Comparing objects"],1),
+ Q("Which keyword is used to catch exceptions in C++?",["except","catch","rescue","handle"],1),
+ Q("What is function overriding?",["Same function signature redefined in a derived class","Multiple functions with the same name in one class","Deleting a function","Renaming a function"],0),
+ Q("Which operator overloading symbol cannot be overloaded in C++?",["+","::","-","*"],1),
+ Q("What is the purpose of a copy constructor?",["Initializes an object using another object of the same class","Deletes an object","Compares two objects","Converts data types"],0),
+ Q("Which access specifier allows access only within the class and derived classes?",["public","private","protected","friend"],2),
+ Q("What does `nullptr` represent in modern C++?",["An integer zero","A null pointer constant","An uninitialized variable","A reference"],1),
+ Q("Which STL container provides O(1) average time complexity for lookups?",["vector","list","unordered_map","deque"],2),
+ Q("What is a template in C++ used for?",["Generic programming across data types","Formatting output","Memory allocation","Exception handling"],0),
+ Q("Which keyword prevents a variable from being modified?",["static","const","final","readonly"],1),
+ Q("What does the `this` pointer refer to?",["The base class","The current object instance","A static member","The next object"],1),
+ Q("Which type of inheritance involves a class derived from two base classes?",["Single","Multiple","Multilevel","Hierarchical"],1),
+ Q("What is the use of the `friend` keyword?",["Grants a function/class access to private members","Creates a public method","Deletes a class","Speeds up compilation"],0),
+ Q("Which smart pointer allows shared ownership in modern C++?",["unique_ptr","shared_ptr","auto_ptr","raw_ptr"],1),
+ Q("What is the output of `5 / 2` when both operands are integers in C++?",["2.5","2","3","Error"],1),
+ Q("Which C++ feature allows binding a function call to code at runtime?",["Static binding","Dynamic binding","Early binding","Compile-time binding"],1),
+ Q("What is operator overloading?",["Redefining operators for user-defined types","Overriding a function","Creating new operators","Deleting operators"],0),
+ Q("Which STL container provides FIFO behavior?",["stack","queue","vector","set"],1),
+ Q("What does the `explicit` keyword prevent?",["Multiple inheritance","Implicit constructor conversions","Virtual functions","Operator overloading"],1),
+ Q("Which of these is true about a pure virtual function?",["It has a body","It makes the class abstract","It cannot be overridden","It's the same as a normal virtual function"],1),
+ Q("What is the output of `cout << 5 << \" \" << 10;`?",["5 10","510","5\\n10","Error"],0),
+ Q("Which access specifier is used for inheritance to keep base class public members public?",["private inheritance","protected inheritance","public inheritance","default inheritance"],2),
+ Q("What is the purpose of `#include` guards or `#pragma once`?",["Speed up compilation","Prevent multiple inclusion of a header","Enable debugging","Reduce binary size"],1),
+ Q("Which STL algorithm is used to sort a container?",["std::order","std::sort","std::arrange","std::rank"],1),
+ Q("What is a lambda expression in C++11 and later?",["A named function only","An anonymous inline function object","A macro","A template"],1),
+ Q("Which keyword is used to delete a dynamically allocated array?",["delete","delete[]","free()","remove[]"],1),
+ Q("What does `std::move` do?",["Copies an object","Casts an object to an rvalue reference to enable move semantics","Deletes an object","Compares two objects"],1),
+ Q("Which of these correctly demonstrates function overloading?",["Same name, different return type only","Same name, different parameter list","Different name, same parameters","Same name, same parameters"],1),
+ Q("What is the diamond problem related to?",["Single inheritance","Multiple inheritance ambiguity","Operator overloading","Templates"],1),
+ Q("Which container adaptor is built on top of deque by default?",["vector","stack","set","map"],1),
+ Q("What is the initializer list used for in a constructor?",["Initializing member variables before the constructor body runs","Deleting members","Overloading functions","Declaring friends"],0),
+ Q("Which of these best describes an iterator in STL?",["A pointer-like object to traverse containers","A sorting algorithm","A type of exception","A memory allocator"],0),
+ Q("What does `const` before a member function signify?",["The function cannot modify member variables","The function is static","The function is virtual","The function cannot be called"],0),
+ Q("Which exception handling keyword re-throws the current exception?",["throw;","rethrow;","catch;","raise;"],0),
+ Q("What is the output type of an uninitialized `int` at global scope in C++?",["Garbage value","0","Compile error","NULL"],1),
+],
+html:[
+ Q("Which tag is used to create a hyperlink?",["<link>","<a>","<href>","<url>"],1),
+ Q("Which CSS property controls text size?",["font-weight","text-size","font-size","size"],2),
+ Q("Which tag defines the largest heading?",["<h6>","<heading>","<h1>","<head>"],2),
+ Q("What does CSS stand for?",["Creative Style Sheets","Cascading Style Sheets","Computer Style Sheets","Colorful Style Sheets"],1),
+ Q("Which attribute specifies an alternate text for an image?",["title","alt","src","desc"],1),
+ Q("Which property is used to change the background color?",["color","bgcolor","background-color","bg-color"],2),
+ Q("Which HTML element is used for the largest, semantic page container?",["<div>","<section>","<main>","<body>"],2),
+ Q("In the box model, what does 'margin' refer to?",["Space inside the border","Space outside the border","The border itself","Content area"],1),
+ Q("Which CSS layout system is designed for two-dimensional layouts?",["Flexbox","Grid","Float","Table"],1),
+ Q("Which tag is used to embed JavaScript in HTML?",["<js>","<script>","<javascript>","<code>"],1),
+ Q("Which value of `display` hides an element and removes its space?",["hidden","invisible","none","collapse"],2),
+ Q("Which doctype declaration is used for HTML5?",["<!DOCTYPE html5>","<!DOCTYPE HTML PUBLIC>","<!DOCTYPE html>","<html5>"],2),
+ Q("Which tag is used to create an ordered list?",["<ul>","<ol>","<li>","<list>"],1),
+ Q("Which CSS selector targets an element with a specific id?",[".class","#id","*element","element[]"],1),
+ Q("What is the correct HTML element for inserting a line break?",["<break>","<lb>","<br>","<newline>"],2),
+ Q("Which property is used to make text bold in CSS?",["font-style","font-weight","text-decoration","font-bold"],1),
+ Q("Which attribute makes an input field mandatory in HTML5?",["mandatory","required","validate","need"],1),
+ Q("What does the `viewport` meta tag control?",["Page title","Responsive scaling on devices","Character encoding","Page background"],1),
+ Q("Which CSS property is used to add space between flex items?",["margin","gap","spacing","padding"],1),
+ Q("Which tag is used to define a table row?",["<td>","<tr>","<th>","<row>"],1),
+ Q("What is the purpose of the `<form>` element?",["Displaying images","Collecting user input","Styling text","Linking pages"],1),
+ Q("Which CSS unit is relative to the root element's font size?",["em","px","rem","%"],2),
+ Q("Which property controls the stacking order of positioned elements?",["z-index","order","layer","stack"],0),
+ Q("Which HTML5 element is used for navigation links?",["<nav>","<navigate>","<links>","<menu>"],0),
+ Q("What does `position: absolute` position an element relative to?",["The viewport always","Its nearest positioned ancestor","The body only","Its sibling element"],1),
+ Q("Which CSS property is used to change text color?",["font-color","text-color","color","fg-color"],2),
+ Q("Which tag is used to define metadata about an HTML document?",["<meta>","<head>","<info>","<data>"],0),
+ Q("Which CSS property is used to create rounded corners?",["corner-radius","border-radius","round-corner","box-radius"],1),
+ Q("What does the `<iframe>` tag do?",["Embeds another HTML page inside the current page","Creates a form","Defines an image map","Creates a table"],0),
+ Q("Which CSS pseudo-class targets an element when the mouse is over it?",[":active",":hover",":focus",":visited"],1),
+ Q("What is the correct HTML5 element for playing video?",["<media>","<video>","<movie>","<play>"],1),
+ Q("Which CSS property controls the space between lines of text?",["line-height","text-spacing","letter-spacing","word-height"],0),
+ Q("What does `flex-direction: column` do in a flex container?",["Stacks items vertically","Stacks items horizontally","Wraps items","Centers items"],0),
+ Q("Which attribute is used to open a link in a new tab?",["target='_blank'","new='true'","open='new'","tab='new'"],0),
+ Q("What is semantic HTML?",["HTML that describes its meaning to browser and developer","HTML with inline styles","HTML without CSS","HTML using only div tags"],0),
+ Q("Which CSS property is used to control element transparency?",["visibility","opacity","display","transparency"],1),
+ Q("What does the `<label>` tag do in a form?",["Styles text","Describes an input field, improving accessibility","Creates a dropdown","Validates input"],1),
+ Q("Which value of `position` removes an element from normal document flow entirely?",["relative","static","absolute","inherit"],2),
+ Q("What is the purpose of CSS media queries?",["Add animations","Apply styles conditionally based on device characteristics","Load external fonts","Define variables"],1),
+ Q("Which HTML tag is used to define an unordered list?",["<ol>","<ul>","<list>","<dl>"],1),
+ Q("What does `box-sizing: border-box` do?",["Excludes padding/border from declared width","Includes padding and border within the declared width","Removes the border","Adds a shadow"],1),
+ Q("Which CSS selector selects all direct children of an element?",["element *","element > child","element + child","element ~ child"],1),
+ Q("What is the default `position` value for HTML elements?",["absolute","relative","static","fixed"],2),
+ Q("Which tag is used to group related form elements?",["<group>","<fieldset>","<section>","<formgroup>"],1),
+ Q("What does CSS specificity determine?",["Which stylesheet loads first","Which rule applies when multiple rules match an element","Browser rendering speed","Page load time"],1),
+ Q("Which HTML attribute specifies a unique identifier for an element?",["class","name","id","key"],2),
+ Q("What is the purpose of the `alt` attribute besides accessibility?",["Displayed if the image fails to load","Sets image size","Adds a border","Compresses the image"],0),
+],
+crt:[
+ Q("If a train covers 60 km in 1.5 hours, what is its speed?",["30 km/h","40 km/h","45 km/h","50 km/h"],1),
+ Q("Find the next number in the series: 2, 6, 12, 20, 30, ?",["36","40","42","44"],2),
+ Q("A sum of money doubles itself in 8 years at simple interest. Find the rate of interest.",["10%","12.5%","15%","20%"],1),
+ Q("If CODING is written as DPEJOH, how is FLOWER written?",["GMPXFS","GMPXES","FMPXFS","GMOXFS"],0),
+ Q("What is 15% of 200?",["20","25","30","35"],2),
+ Q("A can complete a job in 10 days and B in 15 days. Working together, how many days will they take?",["5","6","7","8"],1),
+ Q("Pointing to a man, a woman said, 'His mother is the only daughter of my mother.' How is the woman related to the man?",["Aunt","Sister","Mother","Grandmother"],2),
+ Q("If the average of 5 numbers is 20, what is their sum?",["100","95","105","90"],0),
+ Q("Find the odd one out: 3, 5, 7, 9, 11",["3","5","9","11"],2),
+ Q("A person walks 6 km North, then 8 km East. How far is he from the starting point?",["10 km","12 km","14 km","8 km"],0),
+ Q("If 5 workers can build a wall in 20 days, how many days will 10 workers take?",["5","10","15","20"],1),
+ Q("Which number should replace the question mark: 7, 14, 28, 56, ?",["84","98","112","110"],2),
+ Q("A shopkeeper marks an item 25% above cost price and gives a 10% discount. What is his profit percentage?",["10%","12.5%","15%","20%"],1),
+ Q("If the ratio of two numbers is 3:4 and their sum is 63, find the larger number.",["27","36","32","30"],1),
+ Q("A boat travels 20 km downstream in 2 hours and 20 km upstream in 4 hours. Find the speed of the boat in still water.",["6 km/h","7.5 km/h","8 km/h","10 km/h"],1),
+ Q("What comes next in the series: A, C, F, J, O, ?",["T","U","S","V"],1),
+ Q("If today is Wednesday, what day will it be after 100 days?",["Monday","Tuesday","Wednesday","Friday"],3),
+ Q("Two pipes can fill a tank in 12 and 18 minutes. How long will both take together?",["6.2 min","7.2 min","8 min","9 min"],1),
+ Q("A man's age is 4 times his son's age. After 20 years, he will be twice his son's age. Find the son's present age.",["10","12","15","20"],0),
+ Q("Find the missing number: 4, 9, 16, 25, ?, 49",["30","36","32","40"],1),
+ Q("If a code assigns A=1, B=2, ..., Z=26, what is the sum of letters in 'CAB'?",["6","7","9","5"],1),
+ Q("A trader sells goods at 20% loss. If he had sold it for ₹100 more, he would have gained 5%. Find the cost price.",["₹400","₹500","₹450","₹350"],1),
+ Q("In how many ways can the letters of the word 'BAT' be arranged?",["3","6","9","12"],1),
+ Q("A car travels at 60 km/h for 2 hours and 40 km/h for 1 hour. What is the average speed?",["50 km/h","52 km/h","53.3 km/h","55 km/h"],2),
+ Q("If x + y = 10 and xy = 21, what is x^2 + y^2?",["58","54","50","62"],0),
+ Q("A sum triples itself in 15 years at simple interest. What is the rate of interest?",["10%","13.33%","15%","20%"],1),
+ Q("Find the odd one out: 8, 27, 64, 100, 125",["27","64","100","125"],2),
+ Q("If a clock shows 3:15, what is the angle between the hour and minute hands?",["0 degrees","7.5 degrees","15 degrees","30 degrees"],1),
+ Q("A train 120 m long passes a pole in 12 seconds. What is its speed?",["10 m/s","12 m/s","36 km/h","Both a and c"],3),
+ Q("If A is twice as good a workman as B, and together they finish a job in 14 days, how long will A alone take?",["18 days","20 days","21 days","24 days"],2),
+ Q("What is the next term: 1, 4, 9, 16, 25, ?",["30","36","32","49"],1),
+ Q("Two numbers are in the ratio 5:6 and their LCM is 480. Find the numbers.",["40, 48","50, 60","60, 72","80, 96"],1),
+ Q("If 20% of a number is 50, what is the number?",["200","250","300","150"],1),
+ Q("A father is 3 times as old as his son. In 12 years, he will be twice as old. Find the father's present age.",["30","36","42","48"],1),
+ Q("Which word does NOT belong: Apple, Banana, Carrot, Mango",["Apple","Banana","Carrot","Mango"],2),
+ Q("In a certain code, TABLE is written as UBCMF. How is CHAIR written in that code?",["DIBJS","DIBIS","DHBJS","DIAJS"],0),
+ Q("A sells a bicycle to B at 20% profit and B sells it to C at 25% profit. If C pays ₹300, what did A pay?",["₹180","₹200","₹190","₹210"],1),
+ Q("Find the missing number in the series: 3, 7, 15, 31, ?",["47","63","57","61"],1),
+ Q("A is the brother of B. B is the sister of C. C is the father of D. How is A related to D?",["Uncle","Father","Grandfather","Cousin"],0),
+ Q("If the perimeter of a square is 64 cm, what is its area?",["256 sq cm","128 sq cm","64 sq cm","512 sq cm"],0),
+ Q("A bag contains 4 red and 6 blue balls. What is the probability of picking a red ball?",["0.4","0.6","0.5","0.25"],0),
+ Q("If 8 men can dig a pit in 12 days, how many men are needed to dig it in 6 days?",["12","14","16","20"],2),
+ Q("Find the next letter series: Z, X, V, T, ?",["S","R","Q","P"],1),
+ Q("A number when divided by 6 leaves remainder 3. What is the remainder when its square is divided by 6?",["1","2","3","0"],2),
+ Q("If the cost price of 20 articles equals the selling price of 16 articles, what is the profit percentage?",["20%","25%","30%","16%"],1),
+],
+gk:[
+ Q("Who is known as the Father of the Indian Constitution?",["Mahatma Gandhi","B. R. Ambedkar","Jawaharlal Nehru","Sardar Patel"],1),
+ Q("Which is the largest planet in our solar system?",["Earth","Saturn","Jupiter","Neptune"],2),
+ Q("What is the currency of Japan?",["Yuan","Won","Yen","Ringgit"],2),
+ Q("Which gas do plants absorb from the atmosphere for photosynthesis?",["Oxygen","Carbon dioxide","Nitrogen","Hydrogen"],1),
+ Q("Which is the longest river in the world?",["Amazon","Nile","Ganges","Yangtze"],1),
+ Q("Who wrote the Indian National Anthem?",["Bankim Chandra","Rabindranath Tagore","Sarojini Naidu","Subhas Chandra Bose"],1),
+ Q("What does GDP stand for?",["Gross Domestic Product","General Development Plan","Global Development Product","Gross Development Price"],0),
+ Q("Which is the smallest country in the world by area?",["Monaco","San Marino","Vatican City","Liechtenstein"],2),
+ Q("How many continents are there on Earth?",["5","6","7","8"],2),
+ Q("Which organ in the human body is primarily responsible for pumping blood?",["Lungs","Liver","Heart","Kidney"],2),
+ Q("Which Indian city is known as the 'Silicon Valley of India'?",["Chennai","Hyderabad","Bengaluru","Pune"],2),
+ Q("The Great Barrier Reef is located near which country?",["Brazil","Australia","South Africa","Indonesia"],1),
+ Q("Who was the first Prime Minister of India?",["Mahatma Gandhi","Jawaharlal Nehru","Sardar Patel","Rajendra Prasad"],1),
+ Q("Which planet is known as the Red Planet?",["Venus","Mars","Jupiter","Mercury"],1),
+ Q("What is the national bird of India?",["Sparrow","Peacock","Eagle","Parrot"],1),
+ Q("Which is the largest ocean on Earth?",["Atlantic","Indian","Arctic","Pacific"],3),
+ Q("Who painted the Mona Lisa?",["Vincent van Gogh","Pablo Picasso","Leonardo da Vinci","Michelangelo"],2),
+ Q("Which is the tallest mountain in the world?",["K2","Kangchenjunga","Mount Everest","Nanga Parbat"],2),
+ Q("What is the chemical symbol for gold?",["Go","Gd","Au","Ag"],2),
+ Q("In which year did India gain independence?",["1945","1946","1947","1950"],2),
+ Q("Which country hosted the 2016 Summer Olympics?",["China","UK","Brazil","Russia"],2),
+ Q("Which is the largest desert in the world?",["Sahara","Gobi","Antarctic Desert","Thar"],2),
+ Q("What is the powerhouse of the cell called?",["Nucleus","Ribosome","Mitochondria","Golgi body"],2),
+ Q("Which Indian state is known as the 'Land of Five Rivers'?",["Punjab","Haryana","Rajasthan","Gujarat"],0),
+ Q("Who is credited with inventing the World Wide Web?",["Bill Gates","Tim Berners-Lee","Steve Jobs","Mark Zuckerberg"],1),
+ Q("Which is the longest wall in the world?",["Great Wall of China","Berlin Wall","Hadrian's Wall","Wailing Wall"],0),
+ Q("Which vitamin is produced when skin is exposed to sunlight?",["Vitamin A","Vitamin C","Vitamin D","Vitamin K"],2),
+ Q("Which is the largest continent by area?",["Africa","Asia","North America","Europe"],1),
+ Q("Who is known as the 'Missile Man of India'?",["C.V. Raman","A.P.J. Abdul Kalam","Homi Bhabha","Vikram Sarabhai"],1),
+ Q("What is the capital of Australia?",["Sydney","Melbourne","Canberra","Perth"],2),
+ Q("Which is the national animal of India?",["Lion","Elephant","Tiger","Leopard"],2),
+ Q("Who discovered gravity?",["Albert Einstein","Isaac Newton","Galileo Galilei","Nikola Tesla"],1),
+ Q("Which is the smallest planet in our solar system?",["Mars","Mercury","Venus","Pluto"],1),
+ Q("What is the study of earthquakes called?",["Seismology","Geology","Meteorology","Volcanology"],0),
+ Q("Which Indian festival is known as the 'Festival of Lights'?",["Holi","Diwali","Navratri","Eid"],1),
+ Q("What is the freezing point of water in Celsius?",["0","32","100","-1"],0),
+ Q("Which is the largest mammal in the world?",["African elephant","Blue whale","Giraffe","Polar bear"],1),
+ Q("Who is the author of the epic 'Mahabharata'?",["Valmiki","Ved Vyasa","Kalidasa","Tulsidas"],1),
+ Q("Which country is known as the 'Land of the Rising Sun'?",["China","South Korea","Japan","Thailand"],2),
+ Q("What is the hardest natural substance on Earth?",["Gold","Iron","Diamond","Platinum"],2),
+ Q("Which gas makes up the majority of Earth's atmosphere?",["Oxygen","Carbon dioxide","Nitrogen","Argon"],2),
+ Q("Who was the first person to walk on the Moon?",["Buzz Aldrin","Neil Armstrong","Yuri Gagarin","John Glenn"],1),
+ Q("Which Indian river is known as the 'Sorrow of Bihar'?",["Ganga","Kosi","Yamuna","Brahmaputra"],1),
+ Q("What is the national sport of Japan?",["Judo","Karate","Sumo wrestling","Baseball"],2),
+ Q("Which organelle is responsible for photosynthesis in plant cells?",["Mitochondria","Chloroplast","Nucleus","Ribosome"],1),
+ Q("Who developed the theory of relativity?",["Isaac Newton","Albert Einstein","Niels Bohr","Max Planck"],1),
+ Q("Which is the driest continent on Earth?",["Africa","Australia","Antarctica","Asia"],2),
+ Q("Who is the current Prime Minister of the United Kingdom (as of 2025)?",["Rishi Sunak","Keir Starmer","Boris Johnson","Liz Truss"],1),
+ Q("Which Indian city hosted the G20 Summit in 2023?",["Mumbai","New Delhi","Bengaluru","Chennai"],1),
+ Q("What is the SI unit of electric current?",["Volt","Watt","Ampere","Ohm"],2),
+ Q("Which is the largest island in the world?",["Madagascar","Greenland","Borneo","New Guinea"],1),
+ Q("Who composed India's National Song 'Vande Mataram'?",["Rabindranath Tagore","Bankim Chandra Chattopadhyay","Sarojini Naidu","Muhammad Iqbal"],1),
+ Q("Which blood group is known as the universal donor?",["AB+","O-","A+","B-"],1),
+ Q("What is the capital of Canada?",["Toronto","Vancouver","Ottawa","Montreal"],2),
+ Q("Which Indian scientist led the team behind India's first satellite, Aryabhata?",["Vikram Sarabhai","Satish Dhawan","U. R. Rao","Homi Bhabha"],2),
+ Q("Which is the deepest point in the world's oceans?",["Puerto Rico Trench","Mariana Trench","Java Trench","Tonga Trench"],1),
+ Q("What is the main component of natural gas?",["Propane","Butane","Methane","Ethane"],2),
+ Q("Which country has the longest coastline in the world?",["Russia","Canada","Indonesia","Australia"],1),
+ Q("Who was the first woman Prime Minister of India?",["Sonia Gandhi","Indira Gandhi","Pratibha Patil","Sarojini Naidu"],1),
+ Q("Which is the official language with the most native speakers in the world?",["English","Hindi","Spanish","Mandarin Chinese"],3),
+ Q("What does 'WWW' stand for?",["World Wide Web","World Wide Website","Web Wide World","World Web Wide"],0),
+ Q("Which Indian state has the largest population?",["Maharashtra","Bihar","Uttar Pradesh","West Bengal"],2),
+ Q("Who is known as the 'Father of Green Revolution' in India?",["Norman Borlaug","M. S. Swaminathan","Verghese Kurien","C. Subramaniam"],1),
+ Q("Which planet has the most moons in our solar system?",["Jupiter","Saturn","Uranus","Neptune"],1),
+ Q("What is the currency of the United Kingdom?",["Euro","Pound Sterling","Dollar","Franc"],1),
+ Q("Which vitamin deficiency causes scurvy?",["Vitamin A","Vitamin B12","Vitamin C","Vitamin D"],2),
+ Q("Which is the smallest bone in the human body?",["Femur","Stapes","Radius","Tibia"],1),
+ Q("Who wrote the play 'Romeo and Juliet'?",["Charles Dickens","William Shakespeare","Jane Austen","Mark Twain"],1),
+ Q("Which is the largest freshwater lake in the world by surface area?",["Lake Victoria","Lake Superior","Lake Baikal","Lake Tanganyika"],1),
+ Q("What is the chemical formula for table salt?",["NaCl","KCl","CaCl2","NaOH"],0),
+ Q("Which Indian dam is known as the 'Temple of Modern India'?",["Tehri Dam","Bhakra Nangal Dam","Hirakud Dam","Sardar Sarovar Dam"],1),
+ Q("Which is the most abundant metal in the Earth's crust?",["Iron","Copper","Aluminium","Zinc"],2),
+ Q("Who was awarded the first Nobel Prize in Physics?",["Marie Curie","Wilhelm Röntgen","Albert Einstein","Max Planck"],1),
+ Q("Which is the fastest land animal?",["Lion","Cheetah","Horse","Leopard"],1),
+ Q("What is the national flower of India?",["Rose","Lotus","Sunflower","Marigold"],1),
+ Q("Which strait separates Asia from North America?",["Strait of Gibraltar","Bering Strait","Strait of Malacca","Palk Strait"],1),
+ QG("Which element has the chemical symbol 'Fe'?",["Fluorine","Iron","Lead","Tin"],1,"Science","'Fe' comes from the Latin word for iron, 'ferrum'."),
+ QG("What is the speed of light in a vacuum, approximately?",["3 x 10^5 km/s","3 x 10^8 m/s","3 x 10^6 m/s","3 x 10^3 km/s"],1,"Science","Light travels at about 299,792 km/s, roughly 3 x 10^8 m/s."),
+ QG("Which blood vessel carries oxygenated blood away from the heart?",["Vein","Artery","Capillary","Aorta only"],1,"Science","Arteries carry oxygen-rich blood away from the heart, except the pulmonary artery."),
+ QG("What is the atomic number of hydrogen?",["0","1","2","3"],1,"Science","Hydrogen has just one proton, giving it atomic number 1."),
+ QG("Which planet has a day longer than its year?",["Mars","Venus","Mercury","Neptune"],1,"Science","Venus rotates so slowly that a Venusian day is longer than its year."),
+ QG("What is the pH value of pure water?",["0","7","14","5"],1,"Science","Pure water is neutral, with a pH of 7."),
+ QG("Which part of the eye controls the amount of light entering it?",["Retina","Cornea","Iris","Lens"],2,"Science","The iris adjusts the size of the pupil to control light entry."),
+ QG("Which scientist proposed the laws of planetary motion?",["Isaac Newton","Johannes Kepler","Galileo Galilei","Nicolaus Copernicus"],1,"Science","Johannes Kepler formulated the three laws of planetary motion in the early 1600s."),
+ QG("What is the main gas responsible for the greenhouse effect?",["Oxygen","Nitrogen","Carbon dioxide","Hydrogen"],2,"Science","Carbon dioxide traps heat in the atmosphere, driving the greenhouse effect."),
+ QG("Which vitamin is essential for blood clotting?",["Vitamin A","Vitamin B","Vitamin K","Vitamin E"],2,"Science","Vitamin K is required for the synthesis of clotting factors in the liver."),
+ QG("What is the unit used to measure the frequency of sound waves?",["Decibel","Hertz","Joule","Newton"],1,"Science","Frequency is measured in Hertz (Hz), cycles per second."),
+ QG("Which gas is used to fill balloons because it is lighter than air?",["Oxygen","Helium","Carbon dioxide","Nitrogen"],1,"Science","Helium is much lighter than air, making it ideal for balloons."),
+ QG("What is the process by which liquid turns into vapor called?",["Condensation","Evaporation","Sublimation","Precipitation"],1,"Science","Evaporation is the change of state from liquid to gas."),
+ QG("Which organ produces insulin in the human body?",["Liver","Pancreas","Kidney","Spleen"],1,"Science","The pancreas produces insulin to regulate blood sugar levels."),
+ QG("What is the chemical symbol for sodium?",["So","Sd","Na","S"],2,"Science","Sodium's symbol 'Na' comes from its Latin name, natrium."),
+ QG("Which of these is NOT a state of matter?",["Solid","Liquid","Gas","Energy"],3,"Science","The classical states of matter are solid, liquid, gas, and plasma."),
+ QG("What does DNA stand for?",["Deoxyribonucleic acid","Dinucleic acid","Diribose nucleic acid","Deoxyribose nuclear acid"],0,"Science","DNA stands for deoxyribonucleic acid, the molecule carrying genetic instructions."),
+ QG("Which force keeps planets in orbit around the Sun?",["Magnetism","Gravity","Friction","Nuclear force"],1,"Science","Gravity provides the centripetal pull that keeps planets orbiting the Sun."),
+ QG("What is the boiling point of water at sea level in Celsius?",["90","100","110","120"],1,"Science","At standard atmospheric pressure, water boils at 100°C."),
+ QG("Which metal is liquid at room temperature?",["Iron","Mercury","Aluminium","Zinc"],1,"Science","Mercury is the only metal that is liquid at room temperature."),
+ QG("Who developed the polio vaccine?",["Alexander Fleming","Jonas Salk","Louis Pasteur","Edward Jenner"],1,"Science","Jonas Salk developed the first successful inactivated polio vaccine in 1955."),
+ QG("Which is the largest organ in the human body?",["Liver","Brain","Skin","Lungs"],2,"Science","The skin is the body's largest organ by surface area and weight."),
+ QG("What is the study of fossils called?",["Paleontology","Archaeology","Geology","Anthropology"],0,"Science","Paleontology is the scientific study of fossils and ancient life."),
+ QG("Which particle in an atom carries a negative charge?",["Proton","Neutron","Electron","Nucleon"],2,"Science","Electrons orbit the nucleus and carry a negative electric charge."),
+ QG("Which planet is famous for its prominent ring system?",["Jupiter","Saturn","Uranus","Neptune"],1,"Science","Saturn's rings, made of ice and rock, are the most prominent in the solar system."),
+ QG("Which African country was formerly known as Abyssinia?",["Kenya","Ethiopia","Sudan","Somalia"],1,"Geography","Ethiopia was historically referred to as Abyssinia."),
+ QG("Which is the smallest continent by land area?",["Europe","Australia","Antarctica","South America"],1,"Geography","Australia is the smallest of the seven continents by land area."),
+ QG("Which river flows through Egypt and is vital to its agriculture?",["Amazon","Nile","Congo","Niger"],1,"Geography","The Nile River has sustained Egyptian agriculture for millennia."),
+ QG("Which mountain range separates Europe from Asia?",["Alps","Andes","Ural Mountains","Himalayas"],2,"Geography","The Ural Mountains form part of the traditional boundary between Europe and Asia."),
+ QG("Which country is both in Europe and Asia?",["Turkey","Italy","Germany","Spain"],0,"Geography","Turkey straddles both continents, split by the Bosphorus Strait."),
+ QG("Which Indian state is the largest producer of tea?",["Kerala","Assam","Punjab","Gujarat"],1,"Geography","Assam is India's largest tea-producing state."),
+ QG("Which is the longest river in India?",["Yamuna","Godavari","Ganga","Brahmaputra"],2,"Geography","The Ganga is the longest river flowing entirely within India."),
+ QG("Which country has the most time zones?",["Russia","USA","France","China"],2,"Geography","Including its overseas territories, France spans 12 time zones — more than any other country."),
+ QG("What is the capital of Brazil?",["Rio de Janeiro","Sao Paulo","Brasilia","Salvador"],2,"Geography","Brasilia has been Brazil's capital since 1960."),
+ QG("Which desert is the largest hot desert in the world?",["Gobi Desert","Kalahari Desert","Sahara Desert","Thar Desert"],2,"Geography","The Sahara is the largest hot desert, covering much of North Africa."),
+ QG("Which Indian union territory is an archipelago in the Bay of Bengal?",["Lakshadweep","Andaman and Nicobar Islands","Daman and Diu","Puducherry"],1,"Geography","The Andaman and Nicobar Islands lie in the Bay of Bengal."),
+ QG("Which country is known as the 'Land Down Under'?",["New Zealand","South Africa","Australia","Argentina"],2,"Geography","Australia is nicknamed the 'Land Down Under' due to its location in the Southern Hemisphere."),
+ QG("Which sea lies between Africa, Arabia and India?",["Mediterranean Sea","Red Sea","Arabian Sea","Caspian Sea"],2,"Geography","The Arabian Sea lies between the Arabian Peninsula, Africa and the Indian subcontinent."),
+ QG("Which is the highest waterfall in the world?",["Niagara Falls","Angel Falls","Victoria Falls","Iguazu Falls"],1,"Geography","Angel Falls in Venezuela is the world's tallest uninterrupted waterfall."),
+ QG("Which Indian state shares a border with the most number of other states?",["Madhya Pradesh","Uttar Pradesh","Maharashtra","Rajasthan"],1,"Geography","Uttar Pradesh borders the most states of any Indian state."),
+ QG("Which strait separates Sri Lanka from India?",["Bering Strait","Strait of Malacca","Palk Strait","Torres Strait"],2,"Geography","The Palk Strait separates southeastern India from northern Sri Lanka."),
+ QG("Which is the driest place on Earth?",["Sahara Desert","Atacama Desert","Gobi Desert","Death Valley"],1,"Geography","The Atacama Desert in Chile is considered the driest non-polar place on Earth."),
+ QG("Which country has the largest population in the world (as of the mid-2020s)?",["China","USA","India","Indonesia"],2,"Geography","India overtook China to become the world's most populous country around 2023."),
+ QG("Which Indian city is known as the 'Pink City'?",["Udaipur","Jodhpur","Jaipur","Bikaner"],2,"Geography","Jaipur is called the 'Pink City' for the color of its old city buildings."),
+ QG("Who was the first Mughal emperor of India?",["Akbar","Babur","Humayun","Shah Jahan"],1,"History","Babur founded the Mughal Empire in India after the First Battle of Panipat in 1526."),
+ QG("In which year did World War II end?",["1943","1944","1945","1946"],2,"History","World War II ended in 1945 with the surrender of Japan."),
+ QG("Who led the Salt March (Dandi March) in 1930?",["Jawaharlal Nehru","Mahatma Gandhi","Subhas Chandra Bose","Bhagat Singh"],1,"History","Mahatma Gandhi led the Dandi March to protest the British salt tax."),
+ QG("Which empire built the Colosseum in Rome?",["Greek Empire","Roman Empire","Byzantine Empire","Ottoman Empire"],1,"History","The Colosseum was built under the Roman Empire, completed around 80 AD."),
+ QG("Who was the first President of independent India?",["Jawaharlal Nehru","Dr. Rajendra Prasad","Sardar Patel","Dr. S. Radhakrishnan"],1,"History","Dr. Rajendra Prasad served as India's first President from 1950 to 1962."),
+ QG("Which ancient civilization built the pyramids of Giza?",["Mesopotamian","Egyptian","Roman","Greek"],1,"History","The Ancient Egyptians built the Giza pyramids as tombs for their pharaohs."),
+ QG("Who was known as the 'Iron Man of India'?",["Jawaharlal Nehru","Sardar Vallabhbhai Patel","Bhagat Singh","Lal Bahadur Shastri"],1,"History","Sardar Patel earned this title for unifying India's princely states after independence."),
+ QG("In which year was the Battle of Plassey fought?",["1757","1857","1707","1607"],0,"History","The Battle of Plassey in 1757 established British East India Company rule in Bengal."),
+ QG("Who wrote the book 'Discovery of India'?",["Mahatma Gandhi","Jawaharlal Nehru","Rabindranath Tagore","Subhas Chandra Bose"],1,"History","Jawaharlal Nehru wrote 'The Discovery of India' while imprisoned during the 1940s."),
+ QG("Which war is associated with the Treaty of Versailles?",["World War I","World War II","Korean War","Vietnam War"],0,"History","The Treaty of Versailles in 1919 formally ended World War I."),
+ QG("Who was the founder of the Maurya Empire?",["Ashoka","Chandragupta Maurya","Bindusara","Samudragupta"],1,"History","Chandragupta Maurya founded the Maurya Empire around 322 BCE."),
+ QG("Which year did the Berlin Wall fall?",["1987","1989","1991","1993"],1,"History","The Berlin Wall fell in 1989, symbolizing the end of the Cold War divide."),
+ QG("Who gave the 'Quit India' call in 1942?",["Jawaharlal Nehru","Mahatma Gandhi","Subhas Chandra Bose","Maulana Azad"],1,"History","Mahatma Gandhi launched the Quit India Movement in August 1942."),
+ QG("Which explorer is credited with discovering the sea route to India in 1498?",["Christopher Columbus","Vasco da Gama","Ferdinand Magellan","Marco Polo"],1,"History","Vasco da Gama reached Calicut, India by sea in 1498."),
+ QG("Who was the last Mughal emperor of India?",["Akbar II","Bahadur Shah Zafar","Shah Alam II","Aurangzeb"],1,"History","Bahadur Shah Zafar was exiled after the 1857 revolt, ending Mughal rule."),
+ QG("Which Indian freedom fighter was known as 'Netaji'?",["Bhagat Singh","Subhas Chandra Bose","Chandrashekhar Azad","Lala Lajpat Rai"],1,"History","Subhas Chandra Bose was popularly known as 'Netaji', meaning 'respected leader'."),
+ QG("Who was the first Indian to win a Nobel Prize?",["C.V. Raman","Rabindranath Tagore","Mother Teresa","Amartya Sen"],1,"History","Rabindranath Tagore won the Nobel Prize in Literature in 1913."),
+ QG("How many Fundamental Rights are guaranteed by the Indian Constitution (as originally including the right to property)?",["5","6","7","8"],1,"Polity","The Constitution originally listed 7 Fundamental Rights; the Right to Property was later removed, leaving 6."),
+ QG("Who is known as the 'Father of the Nation' in India?",["Jawaharlal Nehru","Mahatma Gandhi","Sardar Patel","B. R. Ambedkar"],1,"Polity","Mahatma Gandhi is widely honored as the Father of the Nation in India."),
+ QG("Which article of the Indian Constitution abolishes untouchability?",["Article 14","Article 17","Article 21","Article 32"],1,"Polity","Article 17 of the Indian Constitution abolishes untouchability in any form."),
+ QG("Who is the head of the Indian judiciary?",["President","Prime Minister","Chief Justice of India","Attorney General"],2,"Polity","The Chief Justice of India heads the judicial branch of government."),
+ QG("What is the minimum age to become a member of the Lok Sabha in India?",["18 years","21 years","25 years","30 years"],2,"Polity","A candidate must be at least 25 years old to contest for the Lok Sabha."),
+ QG("Which body is responsible for conducting elections in India?",["Supreme Court","Election Commission of India","Parliament","NITI Aayog"],1,"Polity","The Election Commission of India oversees free and fair elections."),
+ QG("How many members can the Rajya Sabha have at most, as per the Constitution?",["245","250","300","350"],1,"Polity","The Rajya Sabha can have up to 250 members as per the Constitution."),
+ QG("Which amendment of the Indian Constitution is known as the 'Mini Constitution'?",["42nd Amendment","44th Amendment","52nd Amendment","61st Amendment"],0,"Polity","The 42nd Amendment (1976) made sweeping changes and is called the 'Mini Constitution'."),
+ QG("Who appoints the Governor of an Indian state?",["Chief Minister","President of India","Prime Minister","Chief Justice"],1,"Polity","The Governor of a state is appointed by the President of India."),
+ QG("Which schedule of the Indian Constitution deals with anti-defection law?",["8th Schedule","9th Schedule","10th Schedule","12th Schedule"],2,"Polity","The 10th Schedule, added by the 52nd Amendment, contains the anti-defection law."),
+ QG("What is the tenure of the President of India?",["4 years","5 years","6 years","7 years"],1,"Polity","The President of India serves a term of 5 years."),
+ QG("Which is the largest exporter of crude oil in the world?",["USA","Russia","Saudi Arabia","Iran"],2,"Economy","Saudi Arabia has traditionally been the world's largest crude oil exporter."),
+ QG("What is 'inflation' in economics?",["A fall in general price levels","A rise in general price levels","Increase in exports","Decrease in unemployment"],1,"Economy","Inflation refers to a sustained rise in the general price level over time."),
+ QG("Which organization publishes the World Economic Outlook report?",["World Bank","IMF","WTO","UN"],1,"Economy","The International Monetary Fund (IMF) publishes the World Economic Outlook."),
+ QG("What does GST stand for in the Indian tax system?",["General Sales Tax","Goods and Services Tax","Government Service Tax","Gross Sales Tax"],1,"Economy","GST (Goods and Services Tax) is a unified indirect tax introduced in India in 2017."),
+ QG("Which Indian institution is known as the 'Banker's Bank'?",["State Bank of India","Reserve Bank of India","NABARD","SEBI"],1,"Economy","The RBI, India's central bank, is called the 'Banker's Bank' as it regulates other banks."),
+ QG("What is a 'bull market' in stock trading?",["A market with falling prices","A market with rising prices","A market with no trading","A regulated market"],1,"Economy","A bull market is characterized by rising stock prices and investor optimism."),
+ QG("Which country has the largest economy in the world by nominal GDP (as of the mid-2020s)?",["China","Japan","USA","Germany"],2,"Economy","The United States has the largest nominal GDP in the world."),
+ QG("What is the term for money paid by a government to support an industry?",["Tax","Subsidy","Tariff","Duty"],1,"Economy","A subsidy is financial support given by the government to help an industry or activity."),
+ QG("Which index measures the average price change of a basket of consumer goods?",["Consumer Price Index","Gross Domestic Product","Sensex","Human Development Index"],0,"Economy","The Consumer Price Index (CPI) tracks changes in the cost of a fixed basket of goods."),
+ QG("What is the currency of China?",["Yuan","Won","Baht","Ringgit"],0,"Economy","China's official currency is the Renminbi, with the yuan as its basic unit."),
+ QG("Which sector of the economy includes agriculture and mining?",["Primary sector","Secondary sector","Tertiary sector","Quaternary sector"],0,"Economy","The primary sector covers activities that extract raw materials, like agriculture and mining."),
+ QG("Who is credited with founding modern economics with 'The Wealth of Nations'?",["John Maynard Keynes","Adam Smith","Karl Marx","David Ricardo"],1,"Economy","Adam Smith's 1776 work 'The Wealth of Nations' is a foundational text of modern economics."),
+ QG("Which country won the FIFA World Cup in 2022?",["Brazil","France","Argentina","Germany"],2,"Sports","Argentina won the 2022 FIFA World Cup, defeating France in the final."),
+ QG("How many players are there in a standard cricket team on the field?",["9","10","11","12"],2,"Sports","A cricket team fields 11 players at a time."),
+ QG("In which sport is the term 'love' used to indicate zero score?",["Badminton","Tennis","Table Tennis","Squash"],1,"Sports","In tennis scoring, 'love' means a score of zero."),
+ QG("Which country has won the most Cricket World Cups (men's, as of the mid-2020s)?",["India","West Indies","Australia","England"],2,"Sports","Australia has won the men's Cricket World Cup the most times."),
+ QG("In the Olympics, how many rings are there in the official symbol?",["4","5","6","7"],1,"Sports","The Olympic symbol has five interlocking rings, representing five continents."),
+ QG("Which sport is associated with the term 'checkmate'?",["Carrom","Chess","Billiards","Bridge"],1,"Sports","'Checkmate' is the winning move in chess, trapping the opponent's king."),
+ QG("Who holds the record for the most international centuries in men's cricket (as of the mid-2020s)?",["Virat Kohli","Sachin Tendulkar","Ricky Ponting","Kumar Sangakkara"],1,"Sports","Sachin Tendulkar holds the record with 100 international centuries."),
+ QG("Which country hosted the 2020 Summer Olympics (held in 2021)?",["China","Brazil","Japan","UK"],2,"Sports","Japan hosted the postponed 2020 Summer Olympics in Tokyo in 2021."),
+ QG("In football, how many players are on the field per team?",["9","10","11","12"],2,"Sports","Each football team fields 11 players, including the goalkeeper."),
+ QG("Which trophy is awarded to the winner of the men's cricket World Test Championship?",["Ashes Urn","World Test Championship Mace","ICC Trophy","Border-Gavaskar Trophy"],1,"Sports","The winner of the World Test Championship is awarded the WTC Mace."),
+ QG("Which Indian sprinter is known for winning gold in the Asian Games javelin throw?",["Milkha Singh","Neeraj Chopra","P.T. Usha","Anju Bobby George"],1,"Sports","Neeraj Chopra is a celebrated Indian javelin thrower and Olympic gold medalist."),
+ QG("In badminton, what is the maximum number of points needed to win a standard game?",["15","21","25","30"],1,"Sports","A standard badminton game is played to 21 points."),
+ QG("Which country is credited with inventing the sport of table tennis?",["China","India","England","Japan"],2,"Sports","Table tennis originated in England in the late 19th century, as an indoor version of tennis."),
+ QG("Who is the fastest man in the world, holding the 100m world record (as of the mid-2020s)?",["Justin Gatlin","Usain Bolt","Tyson Gay","Yohan Blake"],1,"Sports","Usain Bolt set the 100m world record of 9.58 seconds in 2009."),
+ QG("Which sport is played at Wimbledon?",["Cricket","Tennis","Golf","Badminton"],1,"Sports","Wimbledon is the oldest and most prestigious tennis tournament in the world."),
+ QG("Which UN agency is dedicated to global health?",["UNESCO","WHO","UNICEF","UNDP"],1,"General","The World Health Organization (WHO) coordinates international public health efforts."),
+ QG("What is the full form of ISRO?",["Indian Space Research Organisation","International Space Research Organisation","Indian Scientific Research Organisation","Indian Satellite Research Organisation"],0,"General","ISRO stands for the Indian Space Research Organisation."),
+ QG("Which is the largest religion in the world by number of followers?",["Islam","Christianity","Hinduism","Buddhism"],1,"General","Christianity has the largest number of followers worldwide."),
+ QG("Which day is celebrated as World Environment Day?",["June 5","April 22","March 21","October 2"],0,"General","World Environment Day is observed globally on June 5 each year."),
+ QG("What is the name of India's mission that landed near the Moon's south pole in 2023?",["Mangalyaan","Chandrayaan-3","Gaganyaan","Aditya-L1"],1,"General","Chandrayaan-3 made a successful soft landing near the Moon's south pole in 2023."),
+ QG("Which Indian award is the highest civilian honour?",["Padma Vibhushan","Padma Shri","Bharat Ratna","Ashoka Chakra"],2,"General","The Bharat Ratna is India's highest civilian award."),
+ QG("Which day is observed as International Yoga Day?",["June 21","April 7","May 1","September 21"],0,"General","International Yoga Day is celebrated on June 21 every year."),
+ QG("What is the term for a government by the people, for the people, exercised through elected representatives?",["Monarchy","Democracy","Oligarchy","Theocracy"],1,"General","A democracy is a system of government exercised by elected representatives of the people."),
+ QG("Which social media platform was originally called 'TheFacebook'?",["Instagram","Facebook","Twitter","LinkedIn"],1,"General","Facebook launched in 2004 under the name 'TheFacebook'."),
+ QG("Which gas is commonly used in fire extinguishers?",["Oxygen","Carbon dioxide","Hydrogen","Nitrogen"],1,"General","Carbon dioxide smothers fires by displacing oxygen, making it common in extinguishers."),
+ QG("What does 'AI' stand for in technology?",["Automated Interface","Artificial Intelligence","Applied Informatics","Autonomous Integration"],1,"General","AI stands for Artificial Intelligence, the simulation of human intelligence by machines."),
+ QG("Which Indian city is called the 'City of Lakes'?",["Jaipur","Udaipur","Bhopal","Srinagar"],1,"General","Udaipur is known as the 'City of Lakes' for its numerous artificial lakes."),
+ QG("What is the term for the study of maps and map-making?",["Geology","Cartography","Topology","Geography"],1,"General","Cartography is the science and practice of drawing maps."),
+ QG("Which festival is known as the festival of colors in India?",["Diwali","Holi","Navratri","Baisakhi"],1,"General","Holi, celebrated with colored powders, is known as the festival of colors."),
+
+ /* ---- Geography ---- */
+ QG("Which is the largest country in the world by area?",["China","USA","Russia","Canada"],2,"Geography","Russia is the largest country in the world by land area, spanning parts of Europe and Asia."),
+ QG("Which African country was formerly known as Abyssinia?",["Kenya","Ethiopia","Sudan","Somalia"],1,"Geography","Abyssinia was the historical name for what is now Ethiopia."),
+ QG("Which strait separates Europe and Asia at Istanbul?",["Strait of Gibraltar","Bosphorus","Strait of Hormuz","Bering Strait"],1,"Geography","The Bosphorus strait runs through Istanbul, dividing the city's European and Asian sides."),
+ QG("What is the capital of Brazil?",["Rio de Janeiro","Sao Paulo","Brasilia","Salvador"],2,"Geography","Brasilia was purpose-built and became Brazil's capital in 1960, replacing Rio de Janeiro."),
+ QG("Which is the longest mountain range in the world?",["Rockies","Himalayas","Andes","Alps"],2,"Geography","The Andes stretch about 7,000 km along South America's western coast, making them the longest continental range."),
+ QG("Which desert is located in northern China and Mongolia?",["Sahara","Thar","Gobi Desert","Kalahari"],2,"Geography","The Gobi Desert spans southern Mongolia and northern China."),
+ QG("What is the capital of South Korea?",["Busan","Seoul","Incheon","Daegu"],1,"Geography","Seoul has been the capital of South Korea since the country's founding."),
+ QG("Which river flows through Egypt and is vital to its agriculture?",["Congo","Niger","Nile","Zambezi"],2,"Geography","The Nile has supported Egyptian civilization for thousands of years."),
+ QG("Which is the smallest continent by area?",["Europe","Antarctica","Australia","South America"],2,"Geography","Australia is the smallest of the traditionally recognized continents."),
+ QG("What is the capital of Argentina?",["Lima","Santiago","Buenos Aires","Montevideo"],2,"Geography","Buenos Aires is Argentina's capital and largest city."),
+ QG("Which country has the most time zones, largely due to its overseas territories?",["Russia","USA","France","United Kingdom"],2,"Geography","Counting its overseas territories, France spans about 12 time zones, more than any other country."),
+ QG("Which sea is famous for being so salty that swimmers float easily on its surface?",["Red Sea","Dead Sea","Caspian Sea","Black Sea"],1,"Geography","The Dead Sea's extremely high salt content makes the water dense enough for people to float."),
+ QG("Which Indian state is the largest by area?",["Madhya Pradesh","Maharashtra","Rajasthan","Uttar Pradesh"],2,"Geography","Rajasthan is India's largest state by area."),
+ QG("Which is the highest waterfall in the world?",["Niagara Falls","Victoria Falls","Angel Falls","Iguazu Falls"],2,"Geography","Angel Falls in Venezuela is the world's tallest uninterrupted waterfall."),
+ QG("Which of these is a transcontinental country, lying in both Europe and Asia?",["Turkey","France","Japan","Brazil"],0,"Geography","Turkey straddles both Europe and Asia, separated by the Bosphorus strait."),
+ QG("What is the capital of Egypt?",["Alexandria","Cairo","Giza","Luxor"],1,"Geography","Cairo is Egypt's capital and largest city."),
+ QG("Which is the longest river in India?",["Yamuna","Godavari","Ganga","Brahmaputra"],2,"Geography","The Ganga (Ganges) is the longest river in India."),
+ QG("Which country is known as the 'Land of a Thousand Lakes'?",["Sweden","Finland","Norway","Iceland"],1,"Geography","Finland has around 188,000 lakes, earning it this nickname."),
+ QG("What is the capital of Kenya?",["Mombasa","Nairobi","Kisumu","Dar es Salaam"],1,"Geography","Nairobi is the capital and largest city of Kenya."),
+ QG("Which mountain range is often considered the traditional boundary between Europe and Asia?",["Andes","Ural Mountains","Alps","Atlas Mountains"],1,"Geography","The Ural Mountains in Russia are conventionally used to mark the Europe-Asia divide."),
+ QG("Which is the largest freshwater lake in the world by surface area?",["Lake Victoria","Lake Baikal","Lake Superior","Caspian Sea"],2,"Geography","Lake Superior, one of North America's Great Lakes, has the largest surface area of any freshwater lake."),
+ QG("Which Indian union territory is an archipelago in the Bay of Bengal?",["Lakshadweep","Andaman and Nicobar Islands","Puducherry","Daman and Diu"],1,"Geography","The Andaman and Nicobar Islands form a chain of islands in the Bay of Bengal."),
+ QG("What is the capital of Vietnam?",["Ho Chi Minh City","Hanoi","Da Nang","Hue"],1,"Geography","Hanoi is the capital of Vietnam, while Ho Chi Minh City is its largest city."),
+ QG("Which is the driest non-polar desert in the world?",["Sahara","Atacama Desert","Thar Desert","Mojave Desert"],1,"Geography","Chile's Atacama Desert is considered the driest non-polar desert on Earth."),
+ QG("Which two countries share the longest international border in the world?",["Russia and China","USA and Canada","India and China","Brazil and Argentina"],1,"Geography","The USA-Canada border stretches roughly 8,891 km, the longest in the world."),
+
+ /* ---- History ---- */
+ QG("Who was the first President of the United States?",["Thomas Jefferson","John Adams","George Washington","Abraham Lincoln"],2,"History","George Washington served as the first US President from 1789 to 1797."),
+ QG("In which year did World War II end?",["1943","1944","1945","1946"],2,"History","World War II ended in 1945 with the surrender of Germany and Japan."),
+ QG("Who led the Salt March (Dandi March) in 1930?",["Jawaharlal Nehru","Mahatma Gandhi","Sardar Patel","Subhas Chandra Bose"],1,"History","Gandhi led the 1930 Salt March to protest the British salt tax."),
+ QG("Which ancient wonder still stands today, located in Giza, Egypt?",["Colossus of Rhodes","Hanging Gardens of Babylon","Great Pyramid of Giza","Lighthouse of Alexandria"],2,"History","The Great Pyramid of Giza is the only ancient wonder of the world that survives largely intact."),
+ QG("Who was the last Mughal emperor of India?",["Aurangzeb","Shah Jahan","Bahadur Shah Zafar","Akbar"],2,"History","Bahadur Shah Zafar was the last Mughal emperor, exiled after the 1857 rebellion."),
+ QG("In which year did the French Revolution begin?",["1776","1789","1799","1804"],1,"History","The French Revolution began in 1789 with the storming of the Bastille."),
+ QG("Who was the first emperor of the Maurya Empire?",["Ashoka","Bindusara","Chandragupta Maurya","Chanakya"],2,"History","Chandragupta Maurya founded the Maurya Empire around 321 BCE."),
+ QG("The Battle of Plassey, which established British influence in Bengal, was fought in which year?",["1757","1764","1857","1707"],0,"History","The Battle of Plassey in 1757 was a turning point that expanded British East India Company control."),
+ QG("Who wrote the book 'The Discovery of India'?",["Mahatma Gandhi","Jawaharlal Nehru","Rajendra Prasad","Sarojini Naidu"],1,"History","Jawaharlal Nehru wrote 'The Discovery of India' while imprisoned during the freedom struggle."),
+ QG("Which vast empire was ruled by Genghis Khan?",["Ottoman Empire","Mongol Empire","Persian Empire","Roman Empire"],1,"History","Genghis Khan founded and led the Mongol Empire, the largest contiguous land empire in history."),
+ QG("In which year did India's Quit India Movement begin?",["1930","1942","1947","1919"],1,"History","The Quit India Movement was launched by Gandhi in August 1942."),
+ QG("Who was known as the 'Iron Man of India'?",["Jawaharlal Nehru","Sardar Vallabhbhai Patel","Bhagat Singh","Lal Bahadur Shastri"],1,"History","Sardar Patel earned this title for unifying India's princely states after independence."),
+ QG("Which war ended with the Treaty of Versailles in 1919?",["World War I","World War II","Napoleonic Wars","Crimean War"],0,"History","The Treaty of Versailles formally ended World War I."),
+ QG("Who founded the Mughal Empire in India?",["Akbar","Humayun","Babur","Aurangzeb"],2,"History","Babur founded the Mughal Empire in 1526 after the Battle of Panipat."),
+ QG("In which year did the Berlin Wall come down?",["1985","1989","1991","1993"],1,"History","The Berlin Wall fell in November 1989, symbolizing the end of the Cold War divide."),
+ QG("Which civilization built the ancient city of Machu Picchu?",["Aztec","Maya","Inca","Olmec"],2,"History","Machu Picchu was built by the Inca civilization in the 15th century."),
+ QG("Who was the first woman to become President of India?",["Sonia Gandhi","Pratibha Patil","Draupadi Murmu","Indira Gandhi"],1,"History","Pratibha Patil became India's first woman President in 2007."),
+ QG("Which Indian freedom fighter is associated with the phrase 'Give me blood, and I shall give you freedom'?",["Bhagat Singh","Subhas Chandra Bose","Chandrashekhar Azad","Lala Lajpat Rai"],1,"History","Subhas Chandra Bose famously used this rallying phrase to inspire the Indian National Army."),
+ QG("In which year did the Indian Constitution come into effect?",["1947","1949","1950","1952"],2,"History","The Constitution of India came into effect on 26 January 1950, celebrated as Republic Day."),
+ QG("Who was the founder of the Sikh religion?",["Guru Gobind Singh","Guru Nanak","Guru Arjan","Guru Tegh Bahadur"],1,"History","Guru Nanak founded Sikhism in the 15th century in the Punjab region."),
+ QG("The Renaissance, a period of great cultural and artistic revival, began in which country?",["France","Italy","Spain","England"],1,"History","The Renaissance began in Italy in the 14th century before spreading across Europe."),
+ QG("Which explorer's expedition was the first to circumnavigate the globe?",["Christopher Columbus","Vasco da Gama","Ferdinand Magellan","James Cook"],2,"History","Magellan's expedition completed the first circumnavigation of the Earth, though he died before its end."),
+ QG("Which Mughal emperor built the Taj Mahal?",["Akbar","Jahangir","Shah Jahan","Aurangzeb"],2,"History","Shah Jahan commissioned the Taj Mahal in memory of his wife Mumtaz Mahal."),
+ QG("In which year did the Indian Rebellion, often called the First War of Independence, occur?",["1757","1857","1885","1905"],1,"History","The 1857 rebellion against British rule is regarded by many as India's first major war of independence."),
+ QG("Which Egyptian queen was famously allied with Julius Caesar and Mark Antony?",["Nefertiti","Hatshepsut","Cleopatra","Ankhesenamun"],2,"History","Cleopatra VII was the last active ruler of the Ptolemaic Kingdom of Egypt."),
+
+ /* ---- Science ---- */
+ QG("What is the chemical formula for water?",["CO2","H2O","O2","H2O2"],1,"Science","Water is made of two hydrogen atoms bonded to one oxygen atom, giving it the formula H2O."),
+ QG("Which planet is famous for its prominent ring system?",["Jupiter","Saturn","Uranus","Neptune"],1,"Science","Saturn's rings, made mostly of ice and rock, are the most prominent in the solar system."),
+ QG("What is the approximate speed of light in a vacuum?",["3 x 10^5 m/s","3 x 10^6 m/s","3 x 10^8 m/s","3 x 10^10 m/s"],2,"Science","Light travels at about 3 x 10^8 meters per second in a vacuum."),
+ QG("Which blood vessel carries oxygenated blood from the lungs to the heart?",["Pulmonary artery","Pulmonary vein","Aorta","Vena cava"],1,"Science","The pulmonary vein is the only vein in the body that carries oxygen-rich blood, from the lungs to the heart."),
+ QG("What is the SI unit of frequency?",["Watt","Hertz","Joule","Newton"],1,"Science","Frequency is measured in hertz (Hz), representing cycles per second."),
+ QG("Which scientist proposed the theory of evolution by natural selection?",["Gregor Mendel","Charles Darwin","Louis Pasteur","Carl Linnaeus"],1,"Science","Charles Darwin outlined natural selection in his 1859 book 'On the Origin of Species'."),
+ QG("What is the pH value of pure water at 25 degrees Celsius?",["0","7","10","14"],1,"Science","Pure water is neutral, with a pH value of 7."),
+ QG("Which part of the human eye controls the amount of light entering it?",["Retina","Cornea","Iris","Lens"],2,"Science","The iris adjusts the pupil's size to regulate how much light enters the eye."),
+ QG("What is the atomic number of hydrogen?",["0","1","2","8"],1,"Science","Hydrogen, the simplest element, has an atomic number of 1."),
+ QG("Which gas is commonly known as 'laughing gas'?",["Carbon dioxide","Nitrous oxide","Methane","Helium"],1,"Science","Nitrous oxide is nicknamed laughing gas for the euphoric effects it can produce."),
+ QG("What is the process called by which a liquid changes into a gas?",["Condensation","Evaporation","Sublimation","Deposition"],1,"Science","Evaporation is the process of a liquid turning into vapor."),
+ QG("Which organ in the human body produces insulin?",["Liver","Kidney","Pancreas","Spleen"],2,"Science","The pancreas produces insulin, which regulates blood sugar levels."),
+ QG("What is the SI unit of force?",["Joule","Pascal","Newton","Watt"],2,"Science","Force is measured in newtons, named after Sir Isaac Newton."),
+ QG("Which element has the chemical symbol 'Na'?",["Nitrogen","Sodium","Nickel","Neon"],1,"Science","'Na' comes from natrium, the Latin name for sodium."),
+ QG("What is the boiling point of water at sea level in degrees Celsius?",["0","50","100","212"],2,"Science","Water boils at 100 degrees Celsius at standard sea-level atmospheric pressure."),
+ QG("Which type of rock is formed from cooled and solidified lava or magma?",["Sedimentary rock","Igneous rock","Metamorphic rock","Mineral rock"],1,"Science","Igneous rocks form when molten rock cools and solidifies."),
+ QG("Which vitamin is also known as ascorbic acid?",["Vitamin A","Vitamin B12","Vitamin C","Vitamin D"],2,"Science","Vitamin C is chemically known as ascorbic acid."),
+ QG("What is the largest organ in the human body?",["Liver","Brain","Skin","Lungs"],2,"Science","The skin is the largest organ, covering and protecting the entire body."),
+ QG("Which scientist is credited with discovering penicillin?",["Louis Pasteur","Alexander Fleming","Robert Koch","Edward Jenner"],1,"Science","Alexander Fleming discovered penicillin in 1928, leading to the first antibiotics."),
+ QG("What is the process by which green plants make their own food called?",["Respiration","Transpiration","Photosynthesis","Germination"],2,"Science","Photosynthesis lets plants convert sunlight, water, and carbon dioxide into food and oxygen."),
+ QG("Which force keeps the planets in orbit around the Sun?",["Magnetism","Gravity","Friction","Nuclear force"],1,"Science","Gravity is the attractive force that keeps planets bound in orbit around the Sun."),
+ QG("What is the chemical symbol for iron?",["Ir","In","Fe","I"],2,"Science","Iron's symbol 'Fe' comes from its Latin name, ferrum."),
+ QG("Which gland is often called the 'master gland' of the human body?",["Thyroid gland","Adrenal gland","Pituitary gland","Pineal gland"],2,"Science","The pituitary gland regulates many other endocrine glands, earning it the 'master gland' title."),
+ QG("Which SI unit is used to measure atmospheric pressure?",["Newton","Pascal","Joule","Watt"],1,"Science","Atmospheric pressure is measured in pascals in the SI system."),
+ QG("Which scientist formulated the three laws of motion?",["Albert Einstein","Galileo Galilei","Isaac Newton","Niels Bohr"],2,"Science","Isaac Newton formulated the three laws of motion in his work Principia Mathematica."),
+
+ /* ---- Polity ---- */
+ QG("How many fundamental rights are currently guaranteed by the Indian Constitution?",["5","6","7","8"],1,"Polity","The Indian Constitution guarantees six fundamental rights after the right to property was removed from this category."),
+ QG("Who is the head of the Indian judiciary?",["The President","The Prime Minister","The Chief Justice of India","The Attorney General"],2,"Polity","The Chief Justice of India heads the Supreme Court and the Indian judiciary."),
+ QG("What is the minimum age to become a member of the Lok Sabha?",["21 years","25 years","30 years","35 years"],1,"Polity","A candidate must be at least 25 years old to contest for the Lok Sabha."),
+ QG("Which article of the Indian Constitution guarantees the Right to Equality?",["Article 12","Article 14","Article 19","Article 21"],1,"Polity","Article 14 guarantees equality before the law and equal protection of the laws."),
+ QG("Who formally appoints the Governor of an Indian state?",["The Chief Minister","The Prime Minister","The President of India","The Chief Justice"],2,"Polity","State Governors are appointed by the President of India."),
+ QG("What is the term of office of the President of India?",["4 years","5 years","6 years","7 years"],1,"Polity","The President of India serves a five-year term, subject to re-election."),
+ QG("Which house of the Indian Parliament is known as the 'Council of States'?",["Lok Sabha","Rajya Sabha","Vidhan Sabha","Vidhan Parishad"],1,"Polity","The Rajya Sabha, representing the states, is also called the Council of States."),
+ QG("Who chaired the Drafting Committee of the Indian Constitution?",["Jawaharlal Nehru","Rajendra Prasad","B. R. Ambedkar","Sardar Patel"],2,"Polity","B. R. Ambedkar chaired the Drafting Committee and is regarded as the chief architect of the Constitution."),
+ QG("What is the minimum age required to become the President of India?",["25 years","30 years","35 years","40 years"],2,"Polity","A candidate must be at least 35 years old to be eligible for President."),
+ QG("Which part of the Indian Constitution contains the Directive Principles of State Policy?",["Part II","Part III","Part IV","Part V"],2,"Polity","The Directive Principles of State Policy are laid out in Part IV of the Constitution."),
+ QG("What is the maximum strength the Rajya Sabha can have as per the Constitution?",["245","250","500","552"],1,"Polity","The Rajya Sabha can have a maximum of 250 members under the Constitution."),
+ QG("Who administers the oath of office to the President of India?",["The Vice President","The Prime Minister","The Chief Justice of India","The Speaker of the Lok Sabha"],2,"Polity","The Chief Justice of India administers the oath of office to the incoming President."),
+ QG("How many schedules does the Indian Constitution currently have?",["8","10","12","14"],2,"Polity","The Indian Constitution originally had 8 schedules; amendments have expanded this to 12."),
+ QG("Which body is responsible for conducting elections in India?",["Supreme Court","Election Commission of India","Parliament","NITI Aayog"],1,"Polity","The Election Commission of India is the constitutional body that conducts elections nationwide."),
+ QG("What is the minimum voting age in India?",["16 years","18 years","21 years","25 years"],1,"Polity","Indian citizens can vote once they turn 18 years old."),
+ QG("Who serves as the ceremonial Supreme Commander of India's armed forces?",["The Prime Minister","The Defence Minister","The President","The Army Chief"],2,"Polity","The President of India holds the ceremonial position of Supreme Commander of the armed forces."),
+ QG("Which amendment to the Indian Constitution is often called the 'Mini Constitution'?",["24th Amendment","42nd Amendment","44th Amendment","52nd Amendment"],1,"Polity","The 42nd Amendment (1976) made sweeping changes and is often called the Mini Constitution."),
+ QG("What does 'PIL' stand for in the Indian legal system?",["Public Interest Litigation","Provisional Interim Law","Public Inquiry License","Preliminary Investigation Letter"],0,"Polity","A Public Interest Litigation (PIL) allows citizens to seek judicial remedy for issues affecting the public."),
+ QG("Who was the first Speaker of the Lok Sabha?",["Neelam Sanjiva Reddy","G. V. Mavalankar","Hukam Singh","K. S. Hegde"],1,"Polity","G. V. Mavalankar served as the first Speaker of the Lok Sabha from 1952."),
+ QG("What is the term of office for members of the Rajya Sabha?",["4 years","5 years","6 years","7 years"],2,"Polity","Rajya Sabha members serve six-year terms, with about a third retiring every two years."),
+
+ /* ---- Economy ---- */
+ QG("What is the full form of RBI?",["Reserve Bank of India","Regional Bank of India","Rural Bank of India","Reserve Bureau of India"],0,"Economy","The Reserve Bank of India (RBI) is India's central banking institution."),
+ QG("Which document outlines a government's estimated revenue and expenditure for the coming year?",["Balance Sheet","Budget","Census Report","Economic Survey"],1,"Economy","The Budget presents the government's planned income and spending for the year."),
+ QG("What term describes a sustained rise in the general price level of goods and services?",["Deflation","Inflation","Recession","Stagnation"],1,"Economy","Inflation refers to a general and sustained increase in prices over time."),
+ QG("Which international organization publishes the 'World Economic Outlook' report?",["World Bank","IMF","WTO","OECD"],1,"Economy","The International Monetary Fund (IMF) regularly publishes the World Economic Outlook."),
+ QG("What is the full form of GST in the Indian tax system?",["Government Service Tax","Goods and Services Tax","General Sales Tax","Gross Sales Tax"],1,"Economy","GST, the Goods and Services Tax, replaced multiple indirect taxes in India from 2017."),
+ QG("Which economic sector includes activities like farming, fishing, and mining?",["Primary sector","Secondary sector","Tertiary sector","Quaternary sector"],0,"Economy","The primary sector covers the direct extraction of natural resources."),
+ QG("What term describes money invested by a foreign company or individual into a business in another country?",["Portfolio investment","Foreign Direct Investment (FDI)","Venture capital","Public offering"],1,"Economy","FDI refers to investment made by a foreign entity to establish lasting interest in a domestic business."),
+ QG("Which body oversaw India's Five-Year Plans before being replaced by NITI Aayog?",["Finance Commission","Planning Commission","RBI","SEBI"],1,"Economy","The Planning Commission oversaw India's Five-Year Plans until it was replaced by NITI Aayog in 2015."),
+ QG("What is the official currency of the United States?",["Euro","Pound Sterling","US Dollar","Canadian Dollar"],2,"Economy","The US Dollar is the official currency of the United States."),
+ QG("Which institution is often called the 'banker's bank' in India?",["State Bank of India","Reserve Bank of India","NABARD","ICICI Bank"],1,"Economy","The RBI regulates and lends to commercial banks, earning it this title."),
+ QG("What does 'NITI Aayog' stand for?",["National Institution for Transforming India","National Investment and Trade Institute","National Infrastructure and Technology Initiative","National Industrial Trade Institution"],0,"Economy","NITI Aayog, formed in 2015, stands for the National Institution for Transforming India."),
+ QG("Which economic system is characterized by free markets and private ownership of the means of production?",["Socialism","Capitalism","Communism","Feudalism"],1,"Economy","Capitalism is based on private ownership and market-driven allocation of resources."),
+ QG("What term refers to the total monetary value of goods and services produced within a country in a year?",["GNP","GDP","CPI","FDI"],1,"Economy","Gross Domestic Product (GDP) measures a country's total economic output."),
+ QG("Which is the oldest stock exchange in Asia?",["National Stock Exchange","Bombay Stock Exchange","Tokyo Stock Exchange","Hong Kong Stock Exchange"],1,"Economy","The Bombay Stock Exchange (BSE), established in 1875, is Asia's oldest stock exchange."),
+ QG("What is the full form of SEBI?",["Securities and Exchange Board of India","State Economic Bureau of India","Securities and Export Board of India","Stock Exchange Board of India"],0,"Economy","SEBI, the Securities and Exchange Board of India, regulates the securities market."),
+
+ /* ---- Sports ---- */
+ QG("How many players are on the field for a cricket team at one time?",["9","10","11","12"],2,"Sports","A cricket team fields 11 players at a time."),
+ QG("In which sport is the term 'checkmate' used?",["Carrom","Chess","Bridge","Snooker"],1,"Sports","'Checkmate' signals the winning move in chess, trapping the opponent's king."),
+ QG("Which country won the first Cricket World Cup, held in 1975?",["Australia","India","West Indies","England"],2,"Sports","The West Indies won the inaugural Cricket World Cup in 1975."),
+ QG("How many rings are there on the Olympic flag?",["4","5","6","7"],1,"Sports","The Olympic flag features five interlocking rings representing the five inhabited continents."),
+ QG("Which sport uses a shuttlecock?",["Tennis","Squash","Badminton","Table tennis"],2,"Sports","Badminton is played with a shuttlecock instead of a ball."),
+ QG("In which city were the 2020 Summer Olympics held (delayed to 2021)?",["Rio de Janeiro","Tokyo","London","Beijing"],1,"Sports","The 2020 Summer Olympics were held in Tokyo, Japan, though postponed to 2021."),
+ QG("How many players are on the field for a football (soccer) team at one time?",["9","10","11","12"],2,"Sports","A football team fields 11 players, including the goalkeeper."),
+ QG("Which trophy is awarded to the winner of the FIFA World Cup?",["Jules Rimet Trophy","FIFA World Cup Trophy","Champions Cup","Golden Cup"],1,"Sports","The current FIFA World Cup Trophy has been awarded to champions since 1974."),
+ QG("In which sport is the 'Davis Cup' awarded?",["Golf","Tennis","Cricket","Badminton"],1,"Sports","The Davis Cup is the premier international team competition in men's tennis."),
+ QG("Which country has won the most FIFA World Cup titles as of 2022?",["Germany","Argentina","Brazil","Italy"],2,"Sports","Brazil has won the FIFA World Cup a record five times."),
+ QG("What is the maximum possible score in a single game of ten-pin bowling?",["200","250","300","350"],2,"Sports","A perfect game in ten-pin bowling, with all strikes, scores 300."),
+ QG("In golf, what is the term for completing a hole one stroke under par?",["Bogey","Eagle","Birdie","Albatross"],2,"Sports","A birdie means finishing a hole in one stroke fewer than par."),
+ QG("Which Indian city hosted the 2010 Commonwealth Games?",["Mumbai","New Delhi","Bengaluru","Kolkata"],1,"Sports","New Delhi hosted the 2010 Commonwealth Games."),
+ QG("How many players from each team are on the court in basketball at one time?",["4","5","6","7"],1,"Sports","Each basketball team has five players on the court at a time."),
+ QG("In tennis, what term is used for a score of zero?",["Nil","Love","Duck","Zero"],1,"Sports","In tennis scoring, zero points is referred to as 'love'."),
+
+ /* ---- General ---- */
+ QG("What is the national flower of India?",["Rose","Lotus","Sunflower","Marigold"],1,"General","The lotus is India's national flower, symbolizing purity and grace."),
+ QG("What is the national tree of India?",["Neem","Banyan tree","Peepal tree","Mango tree"],1,"General","The banyan tree, known for its sprawling roots, is India's national tree."),
+ QG("Which library is often cited as the largest library in the world by number of items?",["British Library","Library of Congress","New York Public Library","Bodleian Library"],1,"General","The Library of Congress in the US holds one of the largest collections in the world."),
+ QG("What is the term for a person who studies stars, planets, and celestial phenomena?",["Geologist","Astronomer","Meteorologist","Biologist"],1,"General","An astronomer studies celestial objects and phenomena beyond Earth's atmosphere."),
+ QG("Which language has the largest number of native speakers within India?",["Bengali","Tamil","Hindi","Telugu"],2,"General","Hindi has the largest number of native speakers among Indian languages."),
+ QG("The Indian national emblem is derived from which historical monument?",["Sanchi Stupa","Lion Capital of Ashoka","Red Fort","Konark Sun Temple"],1,"General","India's state emblem is adapted from the Lion Capital of Ashoka at Sarnath."),
+ QG("Which Indian city is popularly known as the 'Pink City'?",["Udaipur","Jodhpur","Jaipur","Jaisalmer"],2,"General","Jaipur earned this nickname from the pink-colored buildings in its old city."),
+ QG("What is the scientific term for the classification of living organisms into groups?",["Ecology","Taxonomy","Physiology","Morphology"],1,"General","Taxonomy is the branch of science concerned with classifying organisms."),
+ QG("Which of the following is one of the six official languages of the United Nations?",["Hindi","English","Portuguese","German"],1,"General","English is one of the six official UN languages, alongside French, Spanish, Russian, Chinese, and Arabic."),
+ QG("Which sport is traditionally regarded as the national game of India?",["Cricket","Hockey","Kabaddi","Football"],1,"General","Field hockey is traditionally regarded as India's national game, reflecting its Olympic dominance in the mid-20th century."),
+ QG("Which Indian city is known as the 'City of Nawabs'?",["Bhopal","Hyderabad","Lucknow","Rampur"],2,"General","Lucknow earned this title for its Nawabi heritage and culture."),
+ QG("Which lightweight gas is commonly used to fill balloons so they float in air?",["Hydrogen","Helium","Nitrogen","Oxygen"],1,"General","Helium is used in balloons because it is lighter than air and non-flammable, unlike hydrogen."),
+ QG("What is the official currency of India?",["Indian Rupee","Indian Dollar","Indian Taka","Indian Dinar"],0,"General","The Indian Rupee is the official currency of India."),
+ QG("Which Indian city is known as the 'Manchester of India' for its textile industry?",["Surat","Ahmedabad","Kanpur","Coimbatore"],1,"General","Ahmedabad earned this nickname due to its large textile industry."),
+ QG("What is the term for the scientific study of ancient artifacts and structures?",["Anthropology","Archaeology","Paleontology","Ethnography"],1,"General","Archaeology studies human history through the excavation and analysis of artifacts and sites."),
+
+ /* ---- Space & Tech ---- */
+ QG("What was the name of the first artificial satellite launched into space?",["Explorer 1","Sputnik 1","Voyager 1","Apollo 1"],1,"Space & Tech","The Soviet Union launched Sputnik 1 in 1957, the first artificial satellite."),
+ QG("What was the name of India's first satellite, launched in 1975?",["Rohini","Aryabhata","Bhaskara","INSAT-1A"],1,"Space & Tech","Aryabhata, launched in 1975, was India's first satellite."),
+ QG("What is the name of NASA's rover that landed on Mars in 2021?",["Curiosity","Opportunity","Perseverance","Spirit"],2,"Space & Tech","Perseverance landed on Mars in February 2021 to search for signs of ancient life."),
+ QG("Which Indian space mission was launched to study the Sun?",["Chandrayaan-3","Gaganyaan","Aditya-L1","Mangalyaan"],2,"Space & Tech","Aditya-L1 is ISRO's mission dedicated to studying the Sun."),
+ QG("Which is the closest star to Earth, apart from the Sun?",["Alpha Centauri A","Proxima Centauri","Sirius","Betelgeuse"],1,"Space & Tech","Proxima Centauri, part of the Alpha Centauri system, is the nearest known star to the Sun."),
+ QG("Which agency oversees India's space program?",["DRDO","ISRO","CSIR","BARC"],1,"Space & Tech","The Indian Space Research Organisation (ISRO) leads India's space missions."),
+ QG("What term describes a large system of stars, gas, and dust bound together by gravity?",["Nebula","Galaxy","Constellation","Solar system"],1,"Space & Tech","A galaxy is a massive collection of stars, gas, dust, and dark matter held together by gravity."),
+ QG("Which planet is often called Earth's 'twin' due to its similar size?",["Mars","Venus","Mercury","Neptune"],1,"Space & Tech","Venus is close to Earth in size and mass, earning it this nickname, though its atmosphere is very different."),
+ QG("Who was the first human to travel into space?",["Neil Armstrong","Yuri Gagarin","Buzz Aldrin","Alan Shepard"],1,"Space & Tech","Soviet cosmonaut Yuri Gagarin became the first human in space in 1961."),
+ QG("Which private company developed the first reusable orbital-class rocket?",["Blue Origin","Virgin Galactic","SpaceX","Boeing"],2,"Space & Tech","SpaceX's Falcon 9 became the first reusable orbital-class rocket, landing its booster stages for reuse."),
+ QG("What does 'GPS' stand for?",["General Positioning System","Global Positioning System","Geo Positioning Satellite","Global Position Service"],1,"Space & Tech","GPS, the Global Positioning System, uses satellites to determine location on Earth."),
+ QG("What is the name of India's planned human spaceflight mission?",["Aditya-L1","Chandrayaan","Gaganyaan","Mangalyaan"],2,"Space & Tech","Gaganyaan is ISRO's programme to send Indian astronauts into space."),
+ QG("Which space telescope, launched in 2021, succeeded the Hubble Space Telescope?",["Kepler Telescope","Spitzer Telescope","James Webb Space Telescope","Chandra X-ray Observatory"],2,"Space & Tech","The James Webb Space Telescope launched in December 2021 to observe the universe in infrared."),
+ QG("Which planet has the shortest day (fastest rotation) in the solar system?",["Earth","Saturn","Jupiter","Mars"],2,"Space & Tech","Jupiter rotates once in about 10 hours, giving it the shortest day of any planet."),
+ QG("Who was the first woman to travel into space?",["Sally Ride","Valentina Tereshkova","Mae Jemison","Kalpana Chawla"],1,"Space & Tech","Soviet cosmonaut Valentina Tereshkova became the first woman in space in 1963."),
+
+ /* ---- Awards & Honours ---- */
+ QG("Which prestigious prize is awarded annually for outstanding contributions in fields like literature, peace, and science?",["Pulitzer Prize","Nobel Prize","Booker Prize","Grammy Award"],1,"Awards & Honours","The Nobel Prize honors achievements in physics, chemistry, medicine, literature, peace, and economics."),
+ QG("Which is the highest award for lifetime achievement in Indian cinema?",["National Film Award","Filmfare Award","Dadasaheb Phalke Award","IIFA Award"],2,"Awards & Honours","The Dadasaheb Phalke Award is India's highest honour for lifetime contribution to cinema."),
+ QG("Who was the first Indian to win a Nobel Prize?",["Mother Teresa","C. V. Raman","Rabindranath Tagore","Amartya Sen"],2,"Awards & Honours","Rabindranath Tagore won the Nobel Prize in Literature in 1913, becoming the first Indian laureate."),
+ QG("Which award is popularly referred to as the 'Oscars of Bollywood'?",["National Film Award","Filmfare Awards","IIFA Awards","Screen Awards"],1,"Awards & Honours","The Filmfare Awards are among the oldest and most prestigious Bollywood film awards."),
+ QG("What is the highest military gallantry award in India?",["Ashoka Chakra","Vir Chakra","Param Vir Chakra","Maha Vir Chakra"],2,"Awards & Honours","The Param Vir Chakra is India's highest award for gallantry in the presence of the enemy."),
+ QG("What is the highest sporting honour given by the Government of India?",["Arjuna Award","Padma Shri","Major Dhyan Chand Khel Ratna Award","Dronacharya Award"],2,"Awards & Honours","The Khel Ratna award, renamed after hockey legend Major Dhyan Chand, is India's highest sporting honour."),
+ QG("Who was the first Indian-born woman to win a Nobel Prize?",["Indira Gandhi","Mother Teresa","Kiran Bedi","Kalpana Chawla"],1,"Awards & Honours","Mother Teresa, who lived and worked in India, won the Nobel Peace Prize in 1979."),
+ QG("In which city is the Nobel Prize ceremony held for all categories except Peace?",["Oslo","Geneva","Stockholm","Copenhagen"],2,"Awards & Honours","Nobel Prizes other than the Peace Prize are awarded in Stockholm, Sweden."),
+ QG("In which city is the Nobel Peace Prize awarded?",["Stockholm","Oslo","Geneva","Vienna"],1,"Awards & Honours","Unlike other Nobel Prizes, the Peace Prize is awarded in Oslo, Norway."),
+ QG("Which Indian economist won the Nobel Prize in Economics in 2019?",["Amartya Sen","Abhijit Banerjee","Raghuram Rajan","Kaushik Basu"],1,"Awards & Honours","Abhijit Banerjee shared the 2019 Nobel Prize in Economic Sciences for work on global poverty."),
+
+ /* ---- Books & Authors ---- */
+ QG("Who wrote the play 'Romeo and Juliet'?",["Christopher Marlowe","William Shakespeare","Charles Dickens","John Milton"],1,"Books & Authors","William Shakespeare wrote 'Romeo and Juliet' in the late 16th century."),
+ QG("Who is the author of the 'Harry Potter' book series?",["J. R. R. Tolkien","J. K. Rowling","Roald Dahl","C. S. Lewis"],1,"Books & Authors","J. K. Rowling wrote the seven-book Harry Potter series."),
+ QG("Who is traditionally credited as the author of the Indian epic 'Ramayana'?",["Ved Vyasa","Valmiki","Kalidasa","Tulsidas"],1,"Books & Authors","The sage Valmiki is traditionally credited with composing the Ramayana."),
+ QG("Who wrote the autobiography 'Wings of Fire'?",["A. P. J. Abdul Kalam","Jawaharlal Nehru","M. S. Swaminathan","Vikram Sarabhai"],0,"Books & Authors","'Wings of Fire' is the autobiography of former Indian President A. P. J. Abdul Kalam."),
+ QG("Who wrote the popular science book 'A Brief History of Time'?",["Carl Sagan","Stephen Hawking","Richard Feynman","Neil deGrasse Tyson"],1,"Books & Authors","Physicist Stephen Hawking wrote 'A Brief History of Time', published in 1988."),
+ QG("Who is the author of 'Pride and Prejudice'?",["Emily Bronte","Charlotte Bronte","Jane Austen","Virginia Woolf"],2,"Books & Authors","Jane Austen wrote 'Pride and Prejudice', published in 1813."),
+ QG("Who wrote 'On the Origin of Species'?",["Gregor Mendel","Charles Darwin","Alfred Russel Wallace","Thomas Huxley"],1,"Books & Authors","Charles Darwin published 'On the Origin of Species' in 1859, outlining his theory of evolution."),
+ QG("Who wrote 'Gitanjali', for which he won the Nobel Prize in Literature?",["Sarojini Naidu","Rabindranath Tagore","Bankim Chandra Chattopadhyay","Munshi Premchand"],1,"Books & Authors","Rabindranath Tagore's 'Gitanjali' earned him the 1913 Nobel Prize in Literature."),
+ QG("Who wrote the novel 'War and Peace'?",["Fyodor Dostoevsky","Leo Tolstoy","Anton Chekhov","Ivan Turgenev"],1,"Books & Authors","Leo Tolstoy wrote 'War and Peace', a landmark of Russian literature."),
+ QG("Who created the fictional detective Sherlock Holmes?",["Agatha Christie","Arthur Conan Doyle","Edgar Allan Poe","Wilkie Collins"],1,"Books & Authors","Arthur Conan Doyle created Sherlock Holmes, first appearing in 1887."),
+
+ /* ---- Art & Culture ---- */
+ QG("Which classical Indian dance form originated in Tamil Nadu?",["Kathak","Bharatanatyam","Odissi","Manipuri"],1,"Art & Culture","Bharatanatyam is one of the oldest classical dance forms, originating in Tamil Nadu."),
+ QG("Which traditional Indian string instrument is played with a bow?",["Sitar","Tabla","Sarangi","Flute"],2,"Art & Culture","The sarangi is a bowed, short-necked string instrument used in Indian classical music."),
+ QG("The Taj Mahal, a UNESCO World Heritage Site, is located in which Indian city?",["Delhi","Agra","Jaipur","Lucknow"],1,"Art & Culture","The Taj Mahal stands on the banks of the Yamuna river in Agra."),
+ QG("Which festival marks the harvest season in Punjab?",["Onam","Baisakhi","Pongal","Bihu"],1,"Art & Culture","Baisakhi celebrates the harvest season and is significant in Punjab and Sikh tradition."),
+ QG("Which classical dance form from Kerala is known for elaborate makeup and costumes?",["Kuchipudi","Mohiniyattam","Kathakali","Bharatanatyam"],2,"Art & Culture","Kathakali, from Kerala, is famous for its vivid makeup, costumes, and storytelling."),
+ QG("The Taj Mahal is sometimes described by which nickname?",["Jewel of the Desert","Crown of Palaces","Pearl of the East","Garden of Eden"],1,"Art & Culture","The name 'Taj Mahal' roughly translates to 'Crown of Palaces'."),
+ QG("Which classical Indian dance form originated in Odisha?",["Odissi","Kathak","Sattriya","Kuchipudi"],0,"Art & Culture","Odissi is one of the oldest classical dance forms, rooted in the temples of Odisha."),
+ QG("Which Indian musical instrument was famously played by Pandit Ravi Shankar?",["Tabla","Sitar","Veena","Santoor"],1,"Art & Culture","Ravi Shankar was a globally renowned sitar player who helped popularize Indian classical music worldwide."),
+ QG("Which is considered the oldest of the four Vedas?",["Yajurveda","Samaveda","Rigveda","Atharvaveda"],2,"Art & Culture","The Rigveda is regarded as the oldest of the four Vedas."),
+ QG("Which Rajasthani city is known for its annual camel fair?",["Jodhpur","Pushkar","Bikaner","Udaipur"],1,"Art & Culture","The Pushkar Camel Fair is a major annual livestock fair and cultural festival in Rajasthan."),
+
+ /* ---- Environment ---- */
+ QG("Which gas is primarily responsible for the greenhouse effect and global warming?",["Oxygen","Carbon dioxide","Nitrogen","Argon"],1,"Environment","Carbon dioxide traps heat in the atmosphere, making it a major driver of global warming."),
+ QG("What term describes the variety of plant and animal life in a particular habitat?",["Ecosystem","Biodiversity","Biosphere","Symbiosis"],1,"Environment","Biodiversity refers to the range of living species found in an ecosystem or region."),
+ QG("Which layer of the atmosphere protects Earth from harmful ultraviolet radiation?",["Troposphere","Ozone layer","Stratosphere clouds","Mesosphere"],1,"Environment","The ozone layer absorbs most of the Sun's harmful UV radiation."),
+ QG("Which international agreement, adopted in 2015, aims to limit global warming?",["Kyoto Protocol","Montreal Protocol","Paris Agreement","Basel Convention"],2,"Environment","The Paris Agreement, adopted in 2015, sets goals for limiting global temperature rise."),
+ QG("What is the process of planting trees to restore or create a forest called?",["Deforestation","Afforestation","Desertification","Urbanization"],1,"Environment","Afforestation involves planting trees in areas that previously had none, to restore forest cover."),
+ QG("Which renewable energy source directly harnesses the power of sunlight?",["Wind energy","Solar energy","Tidal energy","Geothermal energy"],1,"Environment","Solar energy is captured directly from sunlight, often using photovoltaic panels."),
+ QG("What term describes waste that can be broken down naturally by living organisms?",["Non-biodegradable waste","Biodegradable waste","Hazardous waste","Inert waste"],1,"Environment","Biodegradable waste can be decomposed naturally by bacteria and other organisms."),
+ QG("On which date is Earth Day observed globally?",["April 22","June 5","March 21","October 2"],0,"Environment","Earth Day is observed on April 22 each year to promote environmental protection."),
+ QG("Which Indian government programme was launched to clean and conserve the Ganga river?",["Jal Jeevan Mission","Namami Gange","Swachh Bharat","Clean India Mission"],1,"Environment","Namami Gange is India's flagship programme for the conservation and cleaning of the Ganga."),
+ QG("What term describes a region characterized by very low rainfall and sparse vegetation?",["Grassland","Desert","Wetland","Tundra"],1,"Environment","Deserts are regions that receive very little precipitation and support limited plant life."),
+
+ /* ---- Computers & Tech ---- */
+ QG("What does 'CPU' stand for?",["Central Processing Unit","Computer Personal Unit","Central Program Utility","Core Processing Unit"],0,"Computers & Tech","The CPU, or Central Processing Unit, is the primary component that executes instructions in a computer."),
+ QG("Which company developed the Android operating system?",["Apple","Microsoft","Google","Samsung"],2,"Computers & Tech","Google developed and maintains the Android mobile operating system."),
+ QG("What does 'HTTP' stand for?",["HyperText Transfer Protocol","High Transfer Text Protocol","HyperText Technical Process","Home Text Transfer Protocol"],0,"Computers & Tech","HTTP, or HyperText Transfer Protocol, is the foundation of data communication on the web."),
+ QG("What is the full form of 'RAM' in computing?",["Random Access Memory","Read Access Memory","Rapid Access Module","Run Access Memory"],0,"Computers & Tech","RAM, or Random Access Memory, is a computer's fast, temporary working memory."),
+ QG("Who is often regarded as the 'father of the modern computer' for his early mechanical designs?",["Alan Turing","Charles Babbage","John von Neumann","Ada Lovelace"],1,"Computers & Tech","Charles Babbage designed the Analytical Engine, an early mechanical general-purpose computer concept."),
+ QG("What does 'URL' stand for?",["Universal Resource Link","Uniform Resource Locator","United Resource Locator","Unified Reference Link"],1,"Computers & Tech","A URL, or Uniform Resource Locator, specifies the address of a resource on the internet."),
+ QG("What does 'USB' stand for?",["Universal Serial Bus","United System Bus","Universal System Board","Unified Serial Bus"],0,"Computers & Tech","USB, or Universal Serial Bus, is a common standard for connecting devices to computers."),
+ QG("What is the full form of 'PDF'?",["Personal Document File","Portable Document Format","Public Data File","Printed Document Format"],1,"Computers & Tech","PDF, or Portable Document Format, preserves document formatting across different devices."),
+ QG("Which popular programming language, widely used in data science, is named after a British comedy show?",["Java","Python","Ruby","Perl"],1,"Computers & Tech","Python was named by its creator Guido van Rossum after the comedy group Monty Python."),
+ QG("What does the term 'Wi-Fi' commonly refer to?",["Wireless Fidelity","Wired Frequency","Wireless File","Wide Field Internet"],0,"Computers & Tech","Wi-Fi is commonly understood as 'Wireless Fidelity', a technology for wireless local networking."),
+
+ /* ---- World Organizations ---- */
+ QG("Where is the headquarters of the United Nations located?",["Geneva","New York","Paris","Brussels"],1,"World Organizations","The United Nations headquarters is located in New York City."),
+ QG("What does 'UNESCO' stand for?",["United Nations Educational, Scientific and Cultural Organization","United Nations Economic and Social Council","United Nations Environmental and Scientific Cooperation Office","United Nations Educational and Social Council"],0,"World Organizations","UNESCO promotes international collaboration in education, science, and culture."),
+ QG("Where is the headquarters of the World Health Organization (WHO) located?",["New York","Geneva","Vienna","Paris"],1,"World Organizations","The WHO is headquartered in Geneva, Switzerland."),
+ QG("How many permanent members does the UN Security Council have?",["3","4","5","6"],2,"World Organizations","The UN Security Council has five permanent members: the US, UK, France, Russia, and China."),
+ QG("What does 'NATO' stand for?",["North Atlantic Treaty Organization","North American Trade Organization","National Alliance Treaty Organization","New Atlantic Trade Organization"],0,"World Organizations","NATO, the North Atlantic Treaty Organization, is a military alliance of North American and European countries."),
+ QG("Which organization sets and enforces rules for international trade?",["IMF","World Bank","World Trade Organization","UNCTAD"],2,"World Organizations","The World Trade Organization (WTO) oversees global trade rules between nations."),
+ QG("Where is the headquarters of the International Monetary Fund (IMF) located?",["New York","Washington, D.C.","London","Geneva"],1,"World Organizations","The IMF is headquartered in Washington, D.C., in the United States."),
+ QG("What does 'SAARC' stand for?",["South Asian Association for Regional Cooperation","South African Association for Regional Cooperation","South Asian Alliance for Regional Cooperation","Southeast Asian Association for Regional Cooperation"],0,"World Organizations","SAARC is a regional grouping of South Asian nations promoting cooperation."),
+ QG("Which organization is responsible for selecting host cities for the Olympic Games?",["FIFA","International Olympic Committee","United Nations","World Athletics"],1,"World Organizations","The International Olympic Committee (IOC) selects and oversees Olympic host cities."),
+ QG("Where is the headquarters of Interpol located?",["Geneva, Switzerland","The Hague, Netherlands","Lyon, France","Brussels, Belgium"],2,"World Organizations","Interpol, the international police organization, is headquartered in Lyon, France."),
+],
+neet:[
+ Q("Which of these is the powerhouse of the cell?",["Ribosome","Mitochondria","Golgi apparatus","Lysosome"],1),
+ Q("The functional unit of the kidney is called the:",["Nephron","Neuron","Alveolus","Nephridium"],0),
+ Q("Which blood cells are primarily responsible for fighting infection?",["Red blood cells","White blood cells","Platelets","Plasma cells"],1),
+ Q("DNA replication is described as:",["Conservative","Semi-conservative","Dispersive","Non-conservative"],1),
+ Q("Which hormone regulates blood glucose by promoting its uptake into cells?",["Glucagon","Insulin","Adrenaline","Thyroxine"],1),
+ Q("The process by which plants lose water vapor through stomata is called:",["Respiration","Transpiration","Photosynthesis","Guttation"],1),
+ Q("Which of these is a non-membranous cell organelle?",["Mitochondria","Ribosome","Golgi body","Endoplasmic reticulum"],1),
+ Q("In humans, the normal diploid chromosome number is:",["44","46","48","23"],1),
+ Q("Photosynthesis in plants primarily occurs in which organelle?",["Mitochondria","Nucleus","Chloroplast","Vacuole"],2),
+ Q("Which of these enzymes helps digest starch in the mouth?",["Pepsin","Salivary amylase","Trypsin","Lipase"],1),
+ Q("The pH of human blood is normally maintained around:",["6.4","7.0","7.4","8.0"],2),
+ Q("Which part of the brain controls balance and coordination?",["Cerebrum","Cerebellum","Medulla oblongata","Hypothalamus"],1),
+ Q("Which of the following is NOT a nitrogenous base found in DNA?",["Adenine","Uracil","Guanine","Cytosine"],1),
+ Q("Xylem tissue in plants is primarily responsible for the transport of:",["Food","Water and minerals","Hormones","Oxygen"],1),
+ Q("The Krebs cycle takes place in which part of the cell?",["Cytoplasm","Nucleus","Mitochondrial matrix","Ribosome"],2),
+ Q("Which vitamin acts as a coenzyme and is needed for blood clotting?",["Vitamin A","Vitamin C","Vitamin K","Vitamin E"],2),
+ Q("Which of these organisms is used as a model organism in classical genetics?",["E. coli","Drosophila melanogaster","Paramecium","Amoeba"],1),
+ Q("The exchange of gases in human lungs occurs in the:",["Bronchi","Trachea","Alveoli","Larynx"],2),
+ Q("Which type of immunity is provided by antibodies received from mother's milk?",["Active natural","Passive natural","Active artificial","Passive artificial"],1),
+ Q("Meiosis results in the formation of how many daughter cells from one parent cell?",["2","3","4","1"],2),
+],
+jee:[
+ Q("The SI unit of electric resistance is:",["Ampere","Ohm","Volt","Farad"],1),
+ Q("Which law states that the rate of change of momentum is proportional to the applied force?",["Newton's First Law","Newton's Second Law","Newton's Third Law","Law of Conservation of Momentum"],1),
+ Q("The value of `sin(90°)` is:",["0","1","-1","undefined"],1),
+ Q("Which of the following is a scalar quantity?",["Velocity","Force","Work","Displacement"],2),
+ Q("The derivative of `x^2` with respect to x is:",["x","2x","x^2","2"],1),
+ Q("Which gas law states that pressure is inversely proportional to volume at constant temperature?",["Charles's Law","Boyle's Law","Avogadro's Law","Gay-Lussac's Law"],1),
+ Q("The pH of a neutral aqueous solution at 25°C is:",["0","7","14","1"],1),
+ Q("The number of electrons in a neutral carbon atom (atomic number 6) is:",["4","6","8","12"],1),
+ Q("Which of these is the unit of capacitance?",["Henry","Farad","Tesla","Weber"],1),
+ Q("The integral of `1/x` with respect to x is:",["x^2/2","ln|x| + C","1/x^2","e^x"],1),
+ Q("An isotope differs from another isotope of the same element in the number of:",["Protons","Electrons","Neutrons","Valence electrons"],2),
+ Q("According to the ideal gas equation PV = nRT, R is the:",["Rydberg constant","Universal gas constant","Avogadro constant","Planck's constant"],1),
+ Q("The chemical formula of glucose is:",["C6H12O6","C12H22O11","C6H6","CH4"],0),
+ Q("Which quantum number determines the shape of an orbital?",["Principal (n)","Azimuthal (l)","Magnetic (m)","Spin (s)"],1),
+ Q("The value of `d/dx(sin x)` is:",["-cos x","cos x","-sin x","sin x"],1),
+ Q("Which of these bonds is formed by the sharing of electrons between atoms?",["Ionic bond","Covalent bond","Metallic bond","Hydrogen bond"],1),
+ Q("The escape velocity of Earth is approximately:",["7.9 km/s","11.2 km/s","3 x 10^8 m/s","1.2 km/s"],1),
+ Q("Which of the following is an example of an exothermic reaction?",["Photosynthesis","Combustion of fuel","Melting of ice","Evaporation of water"],1),
+ Q("The centripetal acceleration of an object moving in a circle of radius r with speed v is given by:",["v/r","v^2/r","v*r","v^2*r"],1),
+ Q("Avogadro's number is approximately:",["6.022 x 10^23","3.14 x 10^8","9.8 x 10^0","1.6 x 10^-19"],0),
+],
+};
+
+/* ---------------- GK categories ----------------
+   The original 76 curated GK questions predate categorization; this list
+   assigns each one a topic in the same order it appears in BANK.gk above,
+   so the category picker and filters work across the whole bank, not just
+   the newer QG(...) entries which already carry their own `cat`. */
+const GK_LEGACY_CATS = ['Polity','Science','Economy','Science','Geography','History','Economy','Geography','Geography','Science','Geography','Geography','History','Science','General','Geography','History','Geography','Science','History','Sports','Geography','Science','Geography','Science','Geography','Science','Geography','History','Geography','General','Science','Science','Science','History','Science','Science','History','Geography','Science','Science','History','Geography','Sports','Science','Science','Geography','Polity','Polity','Science','Geography','History','Science','Geography','Science','Geography','Science','Geography','Polity','General','Science','Geography','History','Science','Science','History','Geography','Science','General','Science','Science','Science','General','Geography','General','Geography'];
+GK_LEGACY_CATS.forEach((c,i)=>{ if(BANK.gk[i] && !BANK.gk[i].cat) BANK.gk[i].cat = c; });
+const GK_CATEGORIES = ['All', ...Array.from(new Set(BANK.gk.map(q=>q.cat).filter(Boolean))).sort()];
+
+/* ---------------- procedural question generators ----------------
+   The static BANK above is a fixed, hand-checked set. To go beyond a few
+   hundred questions without sacrificing correctness, these generators build
+   fresh questions with randomized numbers every time a quiz starts — the
+   right answer is computed in code, not guessed, so it's always accurate.
+   This covers CRT aptitude (formula-driven word problems) and code-output
+   prediction for Python/Java/C/C++ (simple integer arithmetic, whose result
+   is identical across all four languages, so one computed value is valid
+   for all of them). HTML/CSS and GK stay static — they're fact-based, and
+   safely randomizing facts isn't possible the same way.
+------------------------------------------------------------------ */
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+function mcqFromValue(correct, suffix){
+  suffix = suffix || '';
+  const seen = new Set([correct]);
+  const distractors = [];
+  const spread = Math.max(4, Math.round(Math.abs(correct)*0.25));
+  while(distractors.length < 3){
+    const delta = randInt(1, spread) * (Math.random()<0.5?-1:1);
+    let d = correct + delta;
+    if(seen.has(d)) continue;
+    seen.add(d);
+    distractors.push(d);
+  }
+  const vals = shuffle([correct, ...distractors]);
+  const opts = vals.map(v => v + suffix);
+  const ans = vals.indexOf(correct);
+  return {opts, ans};
+}
+
+function genArithmeticQuestion(langId){
+  const termCount = randInt(2,3);
+  const nums = []; for(let i=0;i<termCount;i++) nums.push(randInt(2,15));
+  const ops = []; for(let i=0;i<termCount-1;i++) ops.push(['+','-','*'][randInt(0,2)]);
+  let exprStr;
+  if(termCount===3 && Math.random()<0.5){
+    exprStr = `(${nums[0]} ${ops[0]} ${nums[1]}) ${ops[1]} ${nums[2]}`;
+  } else {
+    exprStr = String(nums[0]);
+    for(let i=1;i<nums.length;i++) exprStr += ` ${ops[i-1]} ${nums[i]}`;
+  }
+  const correct = Function('"use strict"; return (' + exprStr + ')')();
+  let codeLine, label;
+  if(langId==='python'){ codeLine = `print(${exprStr})`; label='Python'; }
+  else if(langId==='java'){ codeLine = `System.out.println(${exprStr});`; label='Java'; }
+  else if(langId==='c'){ codeLine = `printf("%d", ${exprStr});`; label='C'; }
+  else { codeLine = `cout << (${exprStr});`; label='C++'; }
+  const {opts, ans} = mcqFromValue(correct);
+  return Q(`[${label}] What does this print?  \`${codeLine}\``, opts, ans);
+}
+
+function genCrtQuestion(){
+  const templates = [
+    ()=>{
+      const speed = randInt(30,90), time = randInt(2,6), dist = speed*time;
+      const {opts, ans} = mcqFromValue(dist, ' km');
+      return Q(`A vehicle travels at ${speed} km/h for ${time} hours. What distance does it cover?`, opts, ans);
+    },
+    ()=>{
+      const p = randInt(1000,9000), r = randInt(4,15), t = randInt(2,6);
+      const si = Math.round(p*r*t/100);
+      const {opts, ans} = mcqFromValue(si);
+      return Q(`Find the simple interest on ₹${p} at ${r}% per annum for ${t} years.`, opts, ans);
+    },
+    ()=>{
+      const pct = randInt(5,60), base = randInt(50,500);
+      const val = Math.round(base*pct/100);
+      const {opts, ans} = mcqFromValue(val);
+      return Q(`What is ${pct}% of ${base}?`, opts, ans);
+    },
+    ()=>{
+      const n = randInt(4,6);
+      const nums = Array.from({length:n}, ()=>randInt(10,90));
+      const avg = Math.round(nums.reduce((a,b)=>a+b,0)/n);
+      const {opts, ans} = mcqFromValue(avg);
+      return Q(`Find the average of: ${nums.join(', ')}`, opts, ans);
+    },
+    ()=>{
+      const cp = randInt(200,2000), profitPct = randInt(5,40);
+      const sp = Math.round(cp*(100+profitPct)/100);
+      const {opts, ans} = mcqFromValue(profitPct, '%');
+      return Q(`A shopkeeper buys an item for ₹${cp} and sells it for ₹${sp}. What is the profit percentage?`, opts, ans);
+    },
+    ()=>{
+      const a = randInt(3,9), d = randInt(2,7);
+      const seq = Array.from({length:5}, (_,i)=> a + i*d);
+      const next = a + 5*d;
+      const {opts, ans} = mcqFromValue(next);
+      return Q(`Find the next number in the series: ${seq.join(', ')}, ?`, opts, ans);
+    },
+    ()=>{
+      const w1 = randInt(5,15), w2 = randInt(6,20);
+      // A does job in w1 days, B in w2 days; days together = lcm-free: 1/(1/w1+1/w2)
+      const together = Math.round((w1*w2)/(w1+w2));
+      const {opts, ans} = mcqFromValue(together, ' days');
+      return Q(`A can finish a job in ${w1} days and B can finish it in ${w2} days. Working together, roughly how many days will they take?`, opts, ans);
+    },
+  ];
+  return templates[randInt(0,templates.length-1)]();
+}
+
+function genJeeQuestion(){
+  const templates = [
+    ()=>{ // v = u + at
+      const u = randInt(0,20), a = randInt(1,10), t = randInt(1,10);
+      const v = u + a*t;
+      const {opts, ans} = mcqFromValue(v, ' m/s');
+      return Q(`A body starts with an initial velocity of ${u} m/s and accelerates at ${a} m/s² for ${t} s. Find its final velocity (v = u + at).`, opts, ans);
+    },
+    ()=>{ // s = ut + 1/2 at^2, keep a as integer, t small so exact
+      const u = randInt(0,10), a = randInt(2,10), t = randInt(2,6);
+      const s = u*t + Math.round(0.5*a*t*t);
+      const {opts, ans} = mcqFromValue(s, ' m');
+      return Q(`A body starts with velocity ${u} m/s and accelerates uniformly at ${a} m/s² for ${t} s. Find the distance covered (s = ut + ½at²).`, opts, ans);
+    },
+    ()=>{ // Ohm's law V = IR
+      const i = randInt(1,10), r = randInt(2,50);
+      const v = i*r;
+      const {opts, ans} = mcqFromValue(v, ' V');
+      return Q(`A current of ${i} A flows through a resistor of ${r} Ω. Find the voltage across it (V = IR).`, opts, ans);
+    },
+    ()=>{ // work = force * distance
+      const f = randInt(5,100), d = randInt(2,20);
+      const w = f*d;
+      const {opts, ans} = mcqFromValue(w, ' J');
+      return Q(`A constant force of ${f} N moves an object through a distance of ${d} m in its own direction. Find the work done (W = F × d).`, opts, ans);
+    },
+    ()=>{ // moles = mass / molar mass (choose molar mass that divides evenly)
+      const molarMass = [2,18,44,32,28,17][randInt(0,5)];
+      const moles = randInt(1,10);
+      const mass = molarMass*moles;
+      const {opts, ans} = mcqFromValue(moles, ' mol');
+      return Q(`Find the number of moles in ${mass} g of a substance with molar mass ${molarMass} g/mol (n = mass / molar mass).`, opts, ans);
+    },
+    ()=>{ // quadratic roots sum/product style: simple factorable quadratic x^2 - (sum)x + product
+      const r1 = randInt(1,9), r2 = randInt(1,9);
+      const sum = r1+r2, prod = r1*r2;
+      const {opts, ans} = mcqFromValue(sum);
+      return Q(`If the roots of x² − px + ${prod} = 0 are ${r1} and ${r2}, find p (the sum of the roots).`, opts, ans);
+    },
+    ()=>{ // simple kinetic energy KE = 1/2 m v^2, choose m even and v so result integer
+      const m = randInt(1,10)*2, v = randInt(2,10);
+      const ke = Math.round(0.5*m*v*v);
+      const {opts, ans} = mcqFromValue(ke, ' J');
+      return Q(`Find the kinetic energy of a body of mass ${m} kg moving at ${v} m/s (KE = ½mv²).`, opts, ans);
+    },
+  ];
+  return templates[randInt(0,templates.length-1)]();
+}
+
+function genNeetQuestion(){
+  const templates = [
+    ()=>{ // dilution / concentration style basic ratio, keep as CRT-like but bio/chem flavored
+      const total = randInt(20,100)*2;
+      const half = total/2;
+      const {opts, ans} = mcqFromValue(half);
+      return Q(`In a population of ${total} pea plants following a monohybrid cross with a 1:1 phenotypic ratio, how many plants are expected to show the dominant trait?`, opts, ans);
+    },
+    ()=>{ // simple ratio-based genetics: 3:1 ratio
+      const unit = randInt(5,40);
+      const total = unit*4;
+      const dominant = unit*3;
+      const {opts, ans} = mcqFromValue(dominant);
+      return Q(`In a monohybrid cross showing a 3:1 phenotypic ratio, if there are ${total} offspring in total, how many are expected to show the dominant phenotype?`, opts, ans);
+    },
+    ()=>{ // heart rate / pulse over time
+      const rate = randInt(60,100), minutes = randInt(2,10);
+      const beats = rate*minutes;
+      const {opts, ans} = mcqFromValue(beats, ' beats');
+      return Q(`A person's heart beats at ${rate} beats per minute. How many times does it beat in ${minutes} minutes?`, opts, ans);
+    },
+    ()=>{ // magnification = image size / object size, keep integers
+      const objectSize = randInt(2,10), magnification = randInt(2,20);
+      const imageSize = objectSize*magnification;
+      const {opts, ans} = mcqFromValue(magnification, 'x');
+      return Q(`Under a microscope, an object of actual size ${objectSize} µm appears as ${imageSize} µm. What is the magnification (image size / object size)?`, opts, ans);
+    },
+  ];
+  return templates[randInt(0,templates.length-1)]();
+}
+
+const PROCEDURAL_SUBJECTS = ['python','java','c','cpp','crt','jee','neet'];
+function genProceduralQuestion(subjectId){
+  if(subjectId==='crt') return genCrtQuestion();
+  if(subjectId==='jee') return genJeeQuestion();
+  if(subjectId==='neet') return genNeetQuestion();
+  return genArithmeticQuestion(subjectId);
+}
+
+window.__appBooted = true;
+
+/* ---------------- Firebase setup ----------------
+   1. console.firebase.google.com -> create a project -> add a Web app
+   2. Paste the config values it gives you below
+   3. Authentication -> Sign-in method -> enable Email/Password
+   4. Firestore Database -> create it, then paste firestore.rules into the Rules tab
+   Until the config is filled in, the app shows a setup screen instead of the login form. */
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyDWurnAAbmmHIfQnnII1sZA70pLYiVv1UE',
+  authDomain: 'tri-quiz-4dc5e.firebaseapp.com',
+  projectId: 'tri-quiz-4dc5e',
+  appId: '1:212718427913:web:b94c8c64eb3aff42c9fdd8',
+};
+const FB_READY = !!(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId && FIREBASE_CONFIG.appId);
+let auth = null, db = null;
+if(FB_READY && !FIREBASE_CONFIG.authDomain) console.warn('FIREBASE_CONFIG.authDomain is empty — copy it from the Firebase console (usually <project-id>.firebaseapp.com).');
+if(FB_READY){
+  const fbApp = initializeApp(FIREBASE_CONFIG);
+  auth = getAuth(fbApp);
+  db = getFirestore(fbApp);
+}
+const MIN_PASS = 8;
+const MIN_Q_FOR_RANK = 10;   // very short tests (small GK topics) don't count for rankings
+
+function authMsg(e){
+  const c = (e && e.code) || '';
+  const map = {
+    'auth/invalid-credential': 'incorrect email or password.',
+    'auth/wrong-password': 'incorrect email or password.',
+    'auth/user-not-found': 'incorrect email or password.',
+    'auth/email-already-in-use': 'an account with this email already exists — log in instead.',
+    'auth/weak-password': 'password is too weak — use at least '+MIN_PASS+' characters.',
+    'auth/invalid-email': 'that email address doesn\'t look valid.',
+    'auth/too-many-requests': 'too many attempts — wait a few minutes and try again.',
+    'auth/network-request-failed': 'network error — check your connection (or an ad-blocker/firewall blocking googleapis.com).',
+    'auth/operation-not-allowed': 'Email/Password sign-in is turned off — enable it in Firebase console → Authentication → Sign-in method.',
+    'auth/configuration-not-found': 'Authentication isn\'t set up for this project — in the Firebase console open Authentication, click "Get started", then enable Email/Password.',
+    'auth/admin-restricted-operation': 'sign-ups are disabled for this project — Authentication → Settings → User actions → enable "create (sign-up)".',
+    'auth/invalid-api-key': 'the apiKey in FIREBASE_CONFIG is wrong — copy it again from Project settings → Your apps.',
+    'auth/api-key-not-valid.-please-pass-a-valid-api-key.': 'the apiKey in FIREBASE_CONFIG is wrong — copy it again from Project settings → Your apps.',
+    'auth/unauthorized-domain': 'this domain isn\'t authorized — add it under Authentication → Settings → Authorized domains.',
+    'auth/app-not-authorized': 'this app/domain isn\'t authorized for this API key — check Authorized domains and any API-key restrictions.',
+    'auth/quota-exceeded': 'Firebase\'s email quota is used up for today — try again later.',
+    'auth/operation-not-supported-in-this-environment': 'open this page over http(s) (localhost or a hosted URL), not file://.',
+    'auth/popup-blocked': 'the browser blocked the Google popup — allow popups for this site and try again.',
+    'auth/account-exists-with-different-credential': 'this email is already registered with a different sign-in method.',
+    'auth/internal-error': 'Firebase reported an internal error — check the console for details.',
+  };
+  if(map[c]) return map[c];
+  const detail = c || (e && e.message ? String(e.message).slice(0,120) : 'unknown');
+  return 'something went wrong ('+detail+') — open the browser console (F12) for details.';
+}
+
+/* ---------------- Firestore data layer ----------------
+   scores/{uid}                -> { name, subjects:{ <subject>:{score,total} }, updatedAt }   (one doc per user, best per subject)
+   users/{uid}/attempts/{id}   -> { subject, score, total, ts }                                 (private history)
+   Emails are never written to Firestore, so the public leaderboard exposes only display names and scores. */
+async function recordAttempt(att){
+  const uid = auth.currentUser.uid;
+  const name = state.currentUser.name;
+  await addDoc(collection(db,'users',uid,'attempts'), {
+    subject: att.subject, score: att.score, total: att.total, ts: serverTimestamp(),
+  });
+  if(att.total < MIN_Q_FOR_RANK) return;
+  const ref = doc(db,'scores',uid);
+  await runTransaction(db, async (tx)=>{
+    const snap = await tx.get(ref);
+    const subjects = (snap.exists() && snap.data().subjects) ? {...snap.data().subjects} : {};
+    const prev = subjects[att.subject];
+    const pct = att.score/att.total;
+    const better = !prev || pct > prev.score/prev.total || (pct === prev.score/prev.total && att.score > prev.score);
+    if(better) subjects[att.subject] = {score: att.score, total: att.total};
+    tx.set(ref, {name, subjects, updatedAt: serverTimestamp()});
+  });
+  lbCache = null;
+}
+
+let lbCache = null;
+async function loadLeaderboard(force){
+  if(!force && lbCache && Date.now()-lbCache.t < 30000) return lbCache.users;
+  const snap = await getDocs(query(collection(db,'scores'), limit(500)));
+  const users = snap.docs.map(d=>({uid:d.id, ...d.data()}));
+  lbCache = {t: Date.now(), users};
+  return users;
+}
+
+async function loadMyAttempts(){
+  const uid = auth.currentUser.uid;
+  const snap = await getDocs(query(collection(db,'users',uid,'attempts'), orderBy('ts','desc'), limit(200)));
+  return snap.docs.map(d=>{
+    const x = d.data();
+    return {subject:x.subject, score:x.score, total:x.total, ts: x.ts && x.ts.toMillis ? x.ts.toMillis() : Date.now()};
+  });
+}
+
+/* ---------------- app state ---------------- */
+const root = document.getElementById('root');
+let state = {
+  screen: FB_READY ? 'boot' : 'setup', // setup | boot | login | signup | verify | reset | dashboard | profile | gkCategory | quiz | result | rankings
+  authErr: '',
+  authInfo: '',
+  formEmail: '',
+  currentUser: null, // {uid, email, name}
+  loading: false,
+  quiz: null,
+  lastResult: null,
+  lastBestStreak: 0,
+  saveErr: '',
+  finishing: false,
+  rankSubjectFilter: 'all',
+};
+
+function leaveQuiz(){ clearTimer(); state.quiz = null; state.finishing = false; }
+
+function setSignedIn(user){
+  state.currentUser = {uid:user.uid, email:user.email, name:user.displayName || user.email.split('@')[0]};
+  state.authErr = ''; state.authInfo = '';
+  if(['boot','login','signup','verify','reset'].includes(state.screen)) state.screen = 'dashboard';
+}
+
+if(FB_READY){
+  // restores the session on refresh and reacts to sign-in / sign-out from anywhere
+  onAuthStateChanged(auth, (user)=>{
+    if(user && user.emailVerified){
+      setSignedIn(user);
+    } else if(user){
+      state.currentUser = null;
+      if(['boot','login','signup'].includes(state.screen)) state.screen = 'verify';
+    } else {
+      leaveQuiz();
+      state.currentUser = null;
+      if(!['login','signup','reset'].includes(state.screen)) state.screen = 'login';
+    }
+    render();
+  });
+}
+
+function render(){
+  root.innerHTML = '';
+  const wrap = document.createElement('div'); wrap.className='app';
+  const term = document.createElement('div'); term.className='term';
+  const bar = document.createElement('div'); bar.className='term-bar';
+  bar.innerHTML = `<span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-path">${escapeHtml(termPath())}</span>`;
+  term.appendChild(bar);
+  const body = document.createElement('div'); body.className='term-body';
+  term.appendChild(body);
+  wrap.appendChild(term);
+  root.appendChild(wrap);
+
+  const s = state.screen;
+  if(s==='setup') renderSetup(body);
+  else if(s==='boot') renderBoot(body);
+  else if(s==='login') renderLogin(body);
+  else if(s==='signup') renderSignup(body);
+  else if(s==='verify') renderVerify(body);
+  else if(s==='reset') renderReset(body);
+  else if(!state.currentUser) { state.screen='login'; renderLogin(body); }
+  else if(s==='dashboard') renderDashboard(body);
+  else if(s==='profile') renderProfile(body);
+  else if(s==='gkCategory') renderGkCategory(body);
+  else if(s==='quiz' && state.quiz) renderQuiz(body);
+  else if(s==='result' && state.lastResult) renderResult(body);
+  else if(s==='rankings') renderRankings(body);
+  else { state.screen='dashboard'; renderDashboard(body); }
+}
+
+function termPath(){
+  const s = state.screen;
+  if(['setup','boot','login','signup','verify','reset'].includes(s) || !state.currentUser) return 'guest@compile-rank: ~/'+(s==='verify'?'verify-email':s==='boot'?'':s);
+  const u = state.currentUser.email.split('@')[0];
+  if(s==='dashboard') return u+'@compile-rank: ~/subjects';
+  if(s==='profile') return u+'@compile-rank: ~/profile';
+  if(s==='gkCategory') return u+'@compile-rank: ~/gk/topics';
+  if(s==='quiz' && state.quiz) return u+'@compile-rank: ~/quiz/'+state.quiz.subject;
+  if(s==='result') return u+'@compile-rank: ~/result';
+  if(s==='rankings') return u+'@compile-rank: ~/rankings';
+  return u+'@compile-rank: ~';
+}
+
+function brandRow(showUser){
+  const div=document.createElement('div'); div.className='brand';
+  div.innerHTML = `<div class="brand-name">compile<span class="amp">&amp;</span>rank</div>`;
+  if(showUser && state.currentUser){
+    const u=document.createElement('div'); u.className='brand-user';
+    const nameSpan=document.createElement('span');
+    nameSpan.textContent = state.currentUser.name||state.currentUser.email;
+    nameSpan.style.cursor='pointer';
+    nameSpan.style.textDecoration='underline';
+    nameSpan.style.textDecorationStyle='dotted';
+    nameSpan.title='view profile';
+    nameSpan.onclick = ()=>{ leaveQuiz(); state.screen='profile'; render(); };
+    u.appendChild(nameSpan);
+    const btn=document.createElement('button'); btn.textContent='log out';
+    btn.onclick = async ()=>{ leaveQuiz(); state.authErr=''; state.authInfo=''; state.screen='login'; try{ await signOut(auth); }catch(e){ console.error(e); } render(); };
+    u.appendChild(btn);
+    div.appendChild(u);
+  }
+  return div;
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function heroBlock(body, title, sub){
+  body.appendChild(brandRow(false));
+  const h=document.createElement('h1'); h.className='hero';
+  h.innerHTML = escapeHtml(title)+'<span class="cursor"></span>';
+  body.appendChild(h);
+  const p=document.createElement('p'); p.className='sub'; p.textContent=sub;
+  body.appendChild(p);
+}
+function msgLine(text, isInfo){
+  const d=document.createElement('div'); d.className='err';
+  if(isInfo) d.style.color='var(--accent)';
+  d.textContent=text; return d;
+}
+
+/* ---------------- GOOGLE SIGN-IN ---------------- */
+async function googleSignIn(){
+  state.loading=true; state.authErr=''; state.authInfo=''; render();
+  try{
+    const cred = await signInWithPopup(auth, new GoogleAuthProvider());
+    state.loading=false;
+    setSignedIn(cred.user);
+  }catch(err){
+    state.loading=false;
+    console.error('google sign-in failed:', err);
+    const c = err && err.code;
+    if(c==='auth/popup-closed-by-user' || c==='auth/cancelled-popup-request'){ /* user closed the popup — not an error */ }
+    else if(c==='auth/operation-not-allowed') state.authErr='Google sign-in is turned off — Firebase console → Authentication → Sign-in method → enable Google (and pick a support email).';
+    else if(c==='auth/unauthorized-domain') state.authErr='"'+location.hostname+'" isn\'t an authorized domain — add it under Authentication → Settings → Authorized domains.';
+    else state.authErr = authMsg(err);
+  }
+  render();
+}
+function googleSection(){
+  const d=document.createElement('div');
+  d.style.marginBottom='6px';
+  const b=document.createElement('button'); b.type='button'; b.className='btn ghost'; b.id='g-btn';
+  b.style.cssText='width:100%;justify-content:center;margin-top:0;';
+  b.disabled = state.loading;
+  b.innerHTML = `<svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg><span>${state.loading?'signing in...':'continue with google'}</span>`;
+  b.onclick = googleSignIn;
+  d.appendChild(b);
+  const or=document.createElement('div');
+  or.style.cssText='display:flex;align-items:center;gap:10px;margin:16px 0 0;font-family:var(--mono);font-size:11px;color:var(--muted);';
+  or.innerHTML='<span style="flex:1;height:1px;background:var(--line)"></span>or use email<span style="flex:1;height:1px;background:var(--line)"></span>';
+  d.appendChild(or);
+  return d;
+}
+
+/* ---------------- SETUP / BOOT ---------------- */
+function renderSetup(body){
+  heroBlock(body, 'setup needed', 'This page needs a Firebase project before anyone can sign in.');
+  const box=document.createElement('div');
+  box.style.cssText='background:var(--panel-2);border:1px dashed var(--line);border-radius:8px;padding:16px 18px;font-size:13px;line-height:1.7;color:var(--muted);';
+  box.innerHTML = `<div style="font-family:var(--mono);color:var(--text);margin-bottom:6px;">to-do</div>
+    1. Create a project at console.firebase.google.com and add a <b style="color:var(--text)">Web app</b>.<br>
+    2. Paste its config into <code style="font-family:var(--mono);color:var(--accent)">FIREBASE_CONFIG</code> near the top of the script.<br>
+    3. Authentication → Sign-in method → enable <b style="color:var(--text)">Email/Password</b>.<br>
+    4. Firestore Database → create it, then paste <code style="font-family:var(--mono);color:var(--accent)">firestore.rules</code> into the Rules tab.<br>
+    5. Serve the page over http(s) — localhost or a hosted URL — and add that domain under Authentication → Settings → Authorized domains.`;
+  body.appendChild(box);
+}
+function renderBoot(body){
+  body.appendChild(brandRow(false));
+  const d=document.createElement('div'); d.className='empty'; d.textContent='connecting…';
+  body.appendChild(d);
+}
+
+/* ---------------- LOGIN ---------------- */
+function renderLogin(body){
+  heroBlock(body, 'login', 'Sign in to practice Python, Java, C, C++, HTML, CRT aptitude and GK — then see where you rank.');
+  body.appendChild(googleSection());
+  const form=document.createElement('form');
+  form.innerHTML = `
+    <label>email</label>
+    <input type="email" id="li-email" placeholder="you@college.edu" autocomplete="email" required>
+    <label>password</label>
+    <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password" required>
+  `;
+  form.querySelector('#li-email').value = state.formEmail;
+  const btn=document.createElement('button'); btn.type='submit'; btn.className='btn'; btn.textContent=state.loading?'checking...':'log in →';
+  btn.disabled = state.loading;
+  form.appendChild(btn);
+  form.appendChild(msgLine(state.authErr));
+  if(state.authInfo) form.appendChild(msgLine(state.authInfo, true));
+  const sw=document.createElement('div'); sw.className='switch-line';
+  sw.innerHTML = `new here? <a id="go-signup">create an account</a> &nbsp;·&nbsp; <a id="go-reset">forgot password?</a>`;
+  form.appendChild(sw);
+
+  form.onsubmit = async (e)=>{
+    e.preventDefault();
+    const email = document.getElementById('li-email').value.trim();
+    const pass = document.getElementById('li-pass').value;
+    state.formEmail = email; state.loading=true; state.authErr=''; state.authInfo=''; render();
+    try{
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      state.loading=false;
+      if(!cred.user.emailVerified){ state.screen='verify'; render(); return; }
+      setSignedIn(cred.user); render();
+    }catch(err){
+      state.loading=false; state.authErr = authMsg(err); render();
+    }
+  };
+  body.appendChild(form);
+  setTimeout(()=>{
+    const s=document.getElementById('go-signup'); if(s) s.onclick=()=>{state.screen='signup'; state.authErr=''; state.authInfo=''; render();};
+    const r=document.getElementById('go-reset'); if(r) r.onclick=()=>{state.screen='reset'; state.authErr=''; state.authInfo=''; render();};
+  },0);
+}
+
+/* ---------------- SIGNUP ---------------- */
+function renderSignup(body){
+  heroBlock(body, 'create account', 'We\'ll email you a link to confirm your address. The leaderboard shows your name and scores only — never your email.');
+  body.appendChild(googleSection());
+  const form=document.createElement('form');
+  form.innerHTML = `
+    <label>full name</label>
+    <input type="text" id="su-name" placeholder="Jane Doe" maxlength="40" autocomplete="name" required>
+    <label>email</label>
+    <input type="email" id="su-email" placeholder="you@college.edu" autocomplete="email" required>
+    <label>password</label>
+    <input type="password" id="su-pass" placeholder="min ${MIN_PASS} characters" minlength="${MIN_PASS}" autocomplete="new-password" required>
+  `;
+  form.querySelector('#su-email').value = state.formEmail;
+  const btn=document.createElement('button'); btn.type='submit'; btn.className='btn'; btn.textContent=state.loading?'creating...':'create account →';
+  btn.disabled = state.loading;
+  form.appendChild(btn);
+  form.appendChild(msgLine(state.authErr));
+  const sw=document.createElement('div'); sw.className='switch-line';
+  sw.innerHTML = `already registered? <a id="go-login">log in</a>`;
+  form.appendChild(sw);
+
+  form.onsubmit = async (e)=>{
+    e.preventDefault();
+    const name = document.getElementById('su-name').value.trim();
+    const email = document.getElementById('su-email').value.trim();
+    const pass = document.getElementById('su-pass').value;
+    if(!name){ state.authErr='please enter your name.'; render(); return; }
+    state.formEmail = email; state.loading=true; state.authErr=''; render();
+    let cred;
+    try{
+      cred = await createUserWithEmailAndPassword(auth, email, pass);
+    }catch(err){
+      console.error('signup failed:', err);
+      state.loading=false; state.authErr = authMsg(err); render(); return;
+    }
+    // the account now exists — a failure below must not make it look like signup failed
+    try{ await updateProfile(cred.user, {displayName: name}); }
+    catch(err){ console.error('could not save display name:', err); }
+    try{
+      await sendEmailVerification(cred.user);
+      state.authErr=''; state.authInfo='verification email sent.';
+    }catch(err){
+      console.error('verification email failed:', err);
+      state.authInfo=''; state.authErr='account created, but the verification email could not be sent — '+authMsg(err)+' You can press "resend email" below.';
+    }
+    state.loading=false; state.screen='verify'; render();
+  };
+  body.appendChild(form);
+  setTimeout(()=>{ const g=document.getElementById('go-login'); if(g) g.onclick=()=>{state.screen='login'; state.authErr=''; render();}; },0);
+}
+
+/* ---------------- VERIFY EMAIL ---------------- */
+function renderVerify(body){
+  const u = auth.currentUser;
+  if(!u){ state.screen='login'; renderLogin(body); return; }
+  heroBlock(body, 'verify your email', `We sent a verification link to ${u.email}. Open it, then come back and press continue. Check spam if it doesn't show up.`);
+
+  const btn=document.createElement('button'); btn.className='btn'; btn.textContent=state.loading?'checking...':'i\'ve verified — continue →';
+  btn.disabled = state.loading;
+  body.appendChild(btn);
+  body.appendChild(msgLine(state.authErr));
+  if(state.authInfo) body.appendChild(msgLine(state.authInfo, true));
+
+  const sw=document.createElement('div'); sw.className='switch-line';
+  sw.innerHTML = `didn't get it? <a id="resend-ver">resend email</a> &nbsp;·&nbsp; <a id="cancel-ver">use a different account</a>`;
+  body.appendChild(sw);
+
+  btn.onclick = async ()=>{
+    state.loading=true; state.authErr=''; state.authInfo=''; render();
+    try{
+      await reload(u);
+      state.loading=false;
+      if(u.emailVerified){
+        await u.getIdToken(true);   // refresh token so Firestore rules see email_verified = true
+        setSignedIn(u);
+      } else {
+        state.authErr = 'not verified yet — open the link in the email first.';
+      }
+    }catch(err){ state.loading=false; state.authErr = authMsg(err); }
+    render();
+  };
+  setTimeout(()=>{
+    const r=document.getElementById('resend-ver');
+    if(r) r.onclick = async ()=>{
+      try{ await sendEmailVerification(u); state.authErr=''; state.authInfo='a new verification email is on its way.'; }
+      catch(err){ state.authInfo=''; state.authErr = authMsg(err); }
+      render();
+    };
+    const c=document.getElementById('cancel-ver');
+    if(c) c.onclick = async ()=>{ state.authErr=''; state.authInfo=''; state.screen='login'; try{ await signOut(auth); }catch(e){} render(); };
+  },0);
+}
+
+/* ---------------- PASSWORD RESET ---------------- */
+function renderReset(body){
+  heroBlock(body, 'reset password', 'Enter your email and we\'ll send you a link to choose a new password.');
+  const form=document.createElement('form');
+  form.innerHTML = `<label>email</label><input type="email" id="rs-email" placeholder="you@college.edu" autocomplete="email" required>`;
+  form.querySelector('#rs-email').value = state.formEmail;
+  const btn=document.createElement('button'); btn.type='submit'; btn.className='btn'; btn.textContent=state.loading?'sending...':'send reset link →';
+  btn.disabled = state.loading;
+  form.appendChild(btn);
+  form.appendChild(msgLine(state.authErr));
+  if(state.authInfo) form.appendChild(msgLine(state.authInfo, true));
+  const sw=document.createElement('div'); sw.className='switch-line';
+  sw.innerHTML = `<a id="back-login">← back to login</a>`;
+  form.appendChild(sw);
+  form.onsubmit = async (e)=>{
+    e.preventDefault();
+    const email = document.getElementById('rs-email').value.trim();
+    state.formEmail = email; state.loading=true; state.authErr=''; state.authInfo=''; render();
+    try{ await sendPasswordResetEmail(auth, email); }
+    catch(err){
+      // don't reveal whether an account exists
+      if(err.code!=='auth/user-not-found' && err.code!=='auth/invalid-email'){ state.loading=false; state.authErr=authMsg(err); render(); return; }
+    }
+    state.loading=false; state.authInfo='if an account exists for that email, a reset link has been sent.'; render();
+  };
+  body.appendChild(form);
+  setTimeout(()=>{ const b=document.getElementById('back-login'); if(b) b.onclick=()=>{state.screen='login'; state.authErr=''; state.authInfo=''; render();}; },0);
+}
+
+
+/* ---------------- DASHBOARD ---------------- */
+function renderDashboard(body){
+  body.appendChild(brandRow(true));
+  const h=document.createElement('h1'); h.className='hero';
+  h.innerHTML='choose a subject<span class="cursor"></span>';
+  body.appendChild(h);
+  const p=document.createElement('p'); p.className='sub';
+  p.textContent='Each test pulls 15 randomized multiple-choice questions, 40 seconds each. Python, Java, C, C++, CRT, JEE Mains and NEET draw from a curated bank plus a generator that computes fresh, correct questions every run — effectively unlimited. HTML/CSS and GK are fact-based, so they stay as large fixed banks instead.';
+  body.appendChild(p);
+
+  const grid=document.createElement('div'); grid.className='grid';
+  SUBJECTS.forEach(s=>{
+    const c=document.createElement('div'); c.className='card';
+    c.innerHTML = `<div class="tag" style="background:${s.color}"></div>
+      <div class="lang" style="color:${s.color}">${s.label}</div>
+      <div class="desc">${s.desc}</div>
+      <div class="count">${PROCEDURAL_SUBJECTS.includes(s.id) ? '<b>unlimited</b> — freshly generated each test' : '<b>'+BANK[s.id].length+'</b> curated questions'}</div>`;
+    c.onclick = ()=> { if(s.id==='gk'){ state.screen='gkCategory'; render(); } else { startQuiz(s.id); } };
+    grid.appendChild(c);
+  });
+  body.appendChild(grid);
+
+  const nav=document.createElement('div'); nav.className='nav-row';
+  const rb=document.createElement('button'); rb.className='btn ghost'; rb.textContent='view rankings →';
+  rb.onclick = ()=>{ state.screen='rankings'; render(); };
+  const pb=document.createElement('button'); pb.className='btn ghost'; pb.textContent='my profile →';
+  pb.onclick = ()=>{ state.screen='profile'; render(); };
+  nav.appendChild(rb);
+  nav.appendChild(pb);
+  body.appendChild(nav);
+}
+
+/* ---------------- PROFILE ---------------- */
+function fmtDate(ms){
+  const d = new Date(ms);
+  return d.toLocaleDateString(undefined,{day:'numeric',month:'short'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+}
+async function renderProfile(body){
+  body.appendChild(brandRow(true));
+  const h=document.createElement('h1'); h.className='hero';
+  h.innerHTML='my profile<span class="cursor"></span>';
+  body.appendChild(h);
+  const p=document.createElement('p'); p.className='sub';
+  p.textContent='Your account details and test history on compile&rank.';
+  body.appendChild(p);
+
+  const user = state.currentUser;
+  const initial = (user.name||user.email||'?').trim().charAt(0).toUpperCase();
+
+  const card=document.createElement('div');
+  card.style.cssText='background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:22px;display:flex;align-items:center;gap:16px;';
+  card.innerHTML = `
+    <div style="width:52px;height:52px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:22px;font-weight:700;flex-shrink:0;">${escapeHtml(initial)}</div>
+    <div style="min-width:0;">
+      <div style="font-size:16px;font-weight:700;">${escapeHtml(user.name||'—')}</div>
+      <div style="font-family:var(--mono);font-size:12.5px;color:var(--muted);word-break:break-all;margin-top:2px;">${escapeHtml(user.email)}</div>
+    </div>
+  `;
+  body.appendChild(card);
+
+  const nl=document.createElement('label'); nl.textContent='display name (shown on the leaderboard)';
+  body.appendChild(nl);
+  const nameInput=document.createElement('input'); nameInput.type='text'; nameInput.id='pf-name'; nameInput.value=user.name||''; nameInput.maxLength=40;
+  body.appendChild(nameInput);
+  const emailLabel=document.createElement('label'); emailLabel.textContent='email';
+  body.appendChild(emailLabel);
+  const emailInput=document.createElement('input'); emailInput.type='email'; emailInput.id='pf-email'; emailInput.value=user.email; emailInput.disabled=true; emailInput.style.opacity='0.6'; emailInput.style.cursor='not-allowed';
+  body.appendChild(emailInput);
+
+  const saveBtn=document.createElement('button'); saveBtn.className='btn'; saveBtn.textContent='save changes';
+  const saveErr=document.createElement('div'); saveErr.className='err';
+  saveBtn.onclick = async ()=>{
+    const newName = nameInput.value.trim();
+    if(!newName){ saveErr.textContent='name can\'t be empty.'; return; }
+    saveErr.textContent='';
+    saveBtn.disabled=true; saveBtn.textContent='saving...';
+    try{
+      await updateProfile(auth.currentUser, {displayName: newName});
+      try{ await updateDoc(doc(db,'scores',user.uid), {name:newName}); }catch(e){ /* no scores doc yet — fine */ }
+      state.currentUser.name = newName;
+      lbCache = null;
+      render();
+    }catch(e){
+      console.error(e);
+      saveErr.textContent='could not save — '+authMsg(e);
+      saveBtn.disabled=false; saveBtn.textContent='save changes';
+    }
+  };
+  body.appendChild(saveBtn);
+  body.appendChild(saveErr);
+
+  const h2=document.createElement('div'); h2.style.fontFamily='var(--mono)'; h2.style.fontSize='12px'; h2.style.color='var(--muted)'; h2.style.margin='28px 0 10px'; h2.textContent='TEST HISTORY';
+  body.appendChild(h2);
+
+  const histBox=document.createElement('div');
+  body.appendChild(histBox);
+  const nav=document.createElement('div'); nav.className='nav-row';
+  const back=document.createElement('button'); back.className='btn ghost'; back.textContent='← back to subjects';
+  back.onclick = ()=>{ state.screen='dashboard'; render(); };
+  nav.appendChild(back);
+  body.appendChild(nav);
+
+  histBox.innerHTML='<div class="empty">loading history…</div>';
+  let attempts;
+  try{ attempts = await loadMyAttempts(); }
+  catch(e){ console.error(e); histBox.innerHTML='<div class="empty">couldn\'t load your history — check the Firestore rules.</div>'; return; }
+  histBox.innerHTML='';
+
+  if(attempts.length===0){
+    histBox.innerHTML='<div class="empty">no attempts yet — take a test to see your stats here.</div>';
+    return;
+  }
+  const totalTests = attempts.length;
+  const totalScore = attempts.reduce((s,a)=>s+a.score,0);
+  const totalQs = attempts.reduce((s,a)=>s+a.total,0);
+  const avgPct = Math.round(totalScore/totalQs*100);
+  const bySubject = {};
+  attempts.forEach(a=>{
+    const cur = bySubject[a.subject];
+    if(!cur || a.score/a.total > cur.score/cur.total) bySubject[a.subject]=a;
+  });
+  const stat=(v,l)=>`<div style="background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:14px;">
+        <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent);">${v}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">${l}</div></div>`;
+  const statsGrid=document.createElement('div');
+  statsGrid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;';
+  statsGrid.innerHTML = stat(totalTests,'tests taken')+stat(avgPct+'%','average score')+stat(Object.keys(bySubject).length,'subjects tried');
+  histBox.appendChild(statsGrid);
+
+  const t1=document.createElement('table'); t1.className='lb';
+  t1.innerHTML = `<thead><tr><th>subject</th><th>best score</th><th>%</th></tr></thead>`;
+  const tb1=document.createElement('tbody');
+  Object.values(bySubject).sort((a,b)=> (b.score/b.total)-(a.score/a.total)).forEach(a=>{
+    const subj = SUBJECTS.find(s=>s.id===a.subject);
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td style="color:${subj?subj.color:'var(--text)'}">${subj?escapeHtml(subj.label):escapeHtml(a.subject)}</td><td>${a.score}/${a.total}</td><td>${Math.round(a.score/a.total*100)}%</td>`;
+    tb1.appendChild(tr);
+  });
+  t1.appendChild(tb1);
+  histBox.appendChild(t1);
+
+  const h3=document.createElement('div'); h3.style.cssText='font-family:var(--mono);font-size:12px;color:var(--muted);margin:24px 0 6px;'; h3.textContent='RECENT ATTEMPTS';
+  histBox.appendChild(h3);
+  const t2=document.createElement('table'); t2.className='lb';
+  t2.innerHTML = `<thead><tr><th>when</th><th>subject</th><th>score</th><th>%</th></tr></thead>`;
+  const tb2=document.createElement('tbody');
+  attempts.slice(0,10).forEach(a=>{
+    const subj = SUBJECTS.find(s=>s.id===a.subject);
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td style="color:var(--muted)">${escapeHtml(fmtDate(a.ts))}</td><td style="color:${subj?subj.color:'var(--text)'}">${subj?escapeHtml(subj.label):escapeHtml(a.subject)}</td><td>${a.score}/${a.total}</td><td>${Math.round(a.score/a.total*100)}%</td>`;
+    tb2.appendChild(tr);
+  });
+  t2.appendChild(tb2);
+  histBox.appendChild(t2);
+}
+
+
+/* ---------------- GK CATEGORY PICKER ---------------- */
+function renderGkCategory(body){
+  body.appendChild(brandRow(true));
+  const h=document.createElement('h1'); h.className='hero';
+  h.innerHTML='general knowledge<span class="cursor"></span>';
+  body.appendChild(h);
+  const p=document.createElement('p'); p.className='sub';
+  p.textContent = `Pick a topic to focus on, or run a mixed test drawing from all ${BANK.gk.length} questions across ${GK_CATEGORIES.length-1} topics. Each test is 15 questions, and every answer comes with a short explanation once you lock it in.`;
+  body.appendChild(p);
+
+  const grid=document.createElement('div'); grid.className='grid';
+  GK_CATEGORIES.forEach(cat=>{
+    const count = cat==='All' ? BANK.gk.length : BANK.gk.filter(q=>q.cat===cat).length;
+    const c=document.createElement('div'); c.className='card';
+    c.innerHTML = `<div class="tag" style="background:var(--gk)"></div>
+      <div class="lang" style="color:var(--gk)">${cat}</div>
+      <div class="desc">${cat==='All' ? 'A mixed set drawn from every topic.' : cat+' questions only.'}</div>
+      <div class="count"><b>${count}</b> curated questions</div>`;
+    c.onclick = ()=> startQuiz('gk', cat==='All' ? null : cat);
+    grid.appendChild(c);
+  });
+  body.appendChild(grid);
+
+  const nav=document.createElement('div'); nav.className='nav-row';
+  const back=document.createElement('button'); back.className='btn ghost'; back.textContent='← back to subjects';
+  back.onclick = ()=>{ state.screen='dashboard'; render(); };
+  nav.appendChild(back);
+  body.appendChild(nav);
+}
+
+/* ---------------- QUIZ ---------------- */
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function startQuiz(subjectId, gkCategory){
+  let questions;
+  if(PROCEDURAL_SUBJECTS.includes(subjectId)){
+    // mix a few curated bank questions with freshly generated, randomized ones
+    const staticPool = shuffle(BANK[subjectId]);
+    const staticQs = staticPool.slice(0, 5);
+    const proceduralQs = Array.from({length:10}, ()=> genProceduralQuestion(subjectId));
+    questions = shuffle([...staticQs, ...proceduralQs]);
+  } else if(subjectId==='gk' && gkCategory){
+    const pool = shuffle(BANK.gk.filter(q=>q.cat===gkCategory));
+    questions = pool.slice(0, Math.min(15, pool.length));
+  } else {
+    const pool = shuffle(BANK[subjectId]);
+    questions = pool.slice(0, Math.min(15, pool.length));
+  }
+  state.quiz = {
+    subject: subjectId,
+    questions,
+    idx: 0,
+    selected: new Array(questions.length).fill(null),
+    locked: false,
+    timeLeft: 40,
+    timerId: null,
+    streak: 0,
+    bestStreak: 0,
+  };
+  state.screen='quiz';
+  render();
+  startTimer();
+}
+
+function startTimer(){
+  clearTimer();
+  state.quiz.timerId = setInterval(()=>{
+    state.quiz.timeLeft -= 1;
+    if(state.quiz.timeLeft <= 0){
+      clearTimer();
+      lockAndAdvance(true);
+      return;
+    }
+    updateTimerDisplay();
+  },1000);
+}
+function clearTimer(){ if(state.quiz && state.quiz.timerId){ clearInterval(state.quiz.timerId); state.quiz.timerId=null; } }
+function updateTimerDisplay(){
+  const el = document.getElementById('qtimer');
+  const pb = document.getElementById('qprogress');
+  if(el){ el.textContent = state.quiz.timeLeft+'s'; el.className = 'timer'+(state.quiz.timeLeft<=10?' low':''); }
+  if(pb){ pb.style.width = (state.quiz.timeLeft/40*100)+'%'; }
+}
+
+function renderQuiz(body){
+  const q = state.quiz;
+  const subj = SUBJECTS.find(s=>s.id===q.subject);
+  body.appendChild(brandRow(true));
+
+  const pbwrap=document.createElement('div'); pbwrap.className='progressbar';
+  const pbinner=document.createElement('div'); pbinner.id='qprogress'; pbinner.style.width=(q.timeLeft/40*100)+'%';
+  pbwrap.appendChild(pbinner);
+  body.appendChild(pbwrap);
+
+  const streakBadge = q.streak>=2 ? `<span style="color:var(--amber)">🔥 ${q.streak} streak</span>` : '';
+  const curForBadge = q.questions[q.idx];
+  const topicBadge = (q.subject==='gk' && curForBadge.cat) ? `<span style="color:var(--muted)">· ${escapeHtml(curForBadge.cat)}</span>` : '';
+  const meta=document.createElement('div'); meta.className='qmeta';
+  meta.innerHTML = `<span style="color:${subj.color}">${subj.label}</span>${topicBadge}<span>question ${q.idx+1} / ${q.questions.length}</span>${streakBadge}<span id="qtimer" class="timer${q.timeLeft<=10?' low':''}">${q.timeLeft}s</span>`;
+  body.appendChild(meta);
+
+  const cur = q.questions[q.idx];
+  const qt=document.createElement('p'); qt.className='qtext'; qt.textContent = cur.text;
+  body.appendChild(qt);
+
+  const letters=['A','B','C','D'];
+  const answered = q.locked;
+  cur.opts.forEach((opt,i)=>{
+    const o=document.createElement('div'); o.className='opt';
+    if(q.selected[q.idx]===i && !answered) o.classList.add('selected');
+    if(answered){
+      if(i===cur.ans) o.classList.add('correct');
+      else if(i===q.selected[q.idx]) o.classList.add('wrong');
+      o.style.cursor='default';
+    }
+    o.innerHTML = `<span class="k">${letters[i]}</span><span>${escapeHtml(opt)}</span>`;
+    o.onclick = ()=>{
+      if(q.locked) return;
+      clearTimer();
+      q.selected[q.idx] = i;
+      q.locked = true;
+      if(i===cur.ans){ q.streak += 1; q.bestStreak = Math.max(q.bestStreak, q.streak); }
+      else { q.streak = 0; }
+      render();
+    };
+    body.appendChild(o);
+  });
+
+  if(answered && cur.exp){
+    const exp=document.createElement('div');
+    exp.style.cssText = 'margin-top:12px;padding:12px 14px;border-radius:8px;background:rgba(0,217,160,0.06);border:1px solid var(--line);font-size:12.5px;color:var(--muted);line-height:1.5;';
+    exp.innerHTML = `<b style="color:var(--text)">Why: </b>${escapeHtml(cur.exp)}`;
+    body.appendChild(exp);
+  }
+
+  const foot=document.createElement('div'); foot.className='qfooter';
+  const skip=document.createElement('button'); skip.className='btn ghost'; skip.textContent='skip';
+  skip.onclick = ()=> lockAndAdvance(false);
+  skip.style.display = answered ? 'none' : 'inline-flex';
+  const next=document.createElement('button'); next.className='btn'; next.textContent = q.idx===q.questions.length-1?'finish test →':'next →';
+  next.disabled = q.selected[q.idx]===null;
+  next.onclick = ()=> lockAndAdvance(false);
+  foot.appendChild(skip);
+  foot.appendChild(next);
+  body.appendChild(foot);
+}
+
+function lockAndAdvance(){
+  clearTimer();
+  const q = state.quiz;
+  if(q.idx < q.questions.length-1){
+    q.idx += 1;
+    q.timeLeft = 40;
+    q.locked = false;
+    render();
+    startTimer();
+  } else {
+    finishQuiz();
+  }
+}
+
+async function finishQuiz(){
+  const q = state.quiz;
+  if(!q || state.finishing) return;
+  state.finishing = true;
+  clearTimer();
+  let score = 0;
+  q.questions.forEach((qq,i)=>{ if(q.selected[i]===qq.ans) score++; });
+  const attempt = { subject: q.subject, score, total: q.questions.length, ts: Date.now() };
+  state.saveErr = '';
+  try{ await recordAttempt(attempt); }
+  catch(e){ console.error('saving attempt failed', e); state.saveErr = (e && e.code==='permission-denied') ? 'permission denied — check your Firestore rules and that your email is verified.' : 'check your connection and try again.'; }
+  state.lastResult = attempt;
+  state.lastBestStreak = q.bestStreak || 0;
+  state.rankSubjectFilter = q.subject;
+  state.quiz = null;
+  state.finishing = false;
+  state.screen = 'result';
+  render();
+}
+
+/* ---------------- LEADERBOARD ---------------- */
+function computeRows(users, filter){
+  const rows = [];
+  if(filter==='all'){
+    users.forEach(u=>{
+      const subs = u.subjects||{}; const keys = Object.keys(subs);
+      if(!keys.length) return;
+      let score=0,total=0;
+      keys.forEach(k=>{ score+=subs[k].score; total+=subs[k].total; });
+      rows.push({uid:u.uid, name:u.name, score, total, subjects:keys.length});
+    });
+    rows.sort((a,b)=> b.score-a.score || (b.score/b.total)-(a.score/a.total));
+  } else {
+    users.forEach(u=>{
+      const s = (u.subjects||{})[filter];
+      if(s) rows.push({uid:u.uid, name:u.name, score:s.score, total:s.total});
+    });
+    rows.sort((a,b)=> (b.score/b.total)-(a.score/a.total) || b.score-a.score);
+  }
+  const keyOf = r => filter==='all' ? r.score+'|'+(r.score/r.total).toFixed(4) : (r.score/r.total).toFixed(4)+'|'+r.score;
+  rows.forEach((r,i)=>{ r.rank = (i>0 && keyOf(r)===keyOf(rows[i-1])) ? rows[i-1].rank : i+1; });
+  return rows;
+}
+
+function buildLeaderboardTable(rows, filter, myUid){
+  const wrap=document.createElement('div');
+  if(rows.length===0){
+    wrap.innerHTML = `<div class="empty">no attempts recorded yet — be the first.</div>`;
+    return wrap;
+  }
+  const isAll = filter==='all';
+  const table=document.createElement('table'); table.className='lb';
+  table.innerHTML = isAll
+    ? `<thead><tr><th>#</th><th>name</th><th>points</th><th>subjects</th><th>%</th></tr></thead>`
+    : `<thead><tr><th>#</th><th>name</th><th>score</th><th>%</th></tr></thead>`;
+  const tbody=document.createElement('tbody');
+  const addRow = (row)=>{
+    const tr=document.createElement('tr');
+    const mine = row.uid===myUid;
+    if(mine) tr.classList.add('me');
+    const rc = row.rank===1?'top1':row.rank===2?'top2':row.rank===3?'top3':'';
+    const pct = Math.round(row.score/row.total*100);
+    const nm = escapeHtml(row.name||'anonymous')+(mine?' (you)':'');
+    tr.innerHTML = isAll
+      ? `<td class="rank ${rc}">${row.rank}</td><td>${nm}</td><td>${row.score}</td><td>${row.subjects}</td><td>${pct}%</td>`
+      : `<td class="rank ${rc}">${row.rank}</td><td>${nm}</td><td>${row.score}/${row.total}</td><td>${pct}%</td>`;
+    tbody.appendChild(tr);
+  };
+  rows.slice(0,15).forEach(addRow);
+  const meIdx = rows.findIndex(r=>r.uid===myUid);
+  if(meIdx>=15){
+    const sep=document.createElement('tr');
+    sep.innerHTML = `<td colspan="${isAll?5:4}" style="text-align:center;color:var(--muted);font-family:var(--mono);">⋯</td>`;
+    tbody.appendChild(sep);
+    addRow(rows[meIdx]);
+  }
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  return wrap;
+}
+
+// fills `container` with a summary of the signed-in user's standing plus the table
+async function leaderboardInto(container, filter){
+  container.innerHTML = '<div class="empty">loading rankings…</div>';
+  try{
+    const users = await loadLeaderboard();
+    const rows = computeRows(users, filter);
+    container.innerHTML = '';
+    const me = rows.find(r=>r.uid===state.currentUser.uid);
+    const label = filter==='all' ? 'overall' : (SUBJECTS.find(s=>s.id===filter)||{label:filter}).label;
+    const sum=document.createElement('div');
+    sum.style.cssText='background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px;font-family:var(--mono);font-size:12.5px;';
+    if(me){
+      const pct = Math.round(me.score/me.total*100);
+      sum.innerHTML = `<span style="color:var(--accent)">your rank in ${escapeHtml(label)}: #${me.rank}</span> <span style="color:var(--muted)">of ${rows.length} · ${filter==='all' ? me.score+' pts across '+me.subjects+' subject'+(me.subjects===1?'':'s') : 'best '+me.score+'/'+me.total+' ('+pct+'%)'}</span>`;
+    } else {
+      sum.innerHTML = `<span style="color:var(--muted)">you haven't ranked in ${escapeHtml(label)} yet — finish a ${MIN_Q_FOR_RANK}+ question test to get on the board.</span>`;
+    }
+    container.appendChild(sum);
+    container.appendChild(buildLeaderboardTable(rows, filter, state.currentUser.uid));
+  }catch(e){
+    console.error('leaderboard load failed', e);
+    container.innerHTML = `<div class="empty">couldn't load rankings${e && e.code==='permission-denied' ? ' — check your Firestore rules' : ''}.</div>`;
+  }
+}
+
+/* ---------------- RESULT ---------------- */
+function renderResult(body){
+  body.appendChild(brandRow(true));
+  const r = state.lastResult;
+  const subj = SUBJECTS.find(s=>s.id===r.subject);
+
+  const h=document.createElement('h1'); h.className='hero';
+  h.innerHTML = `test complete<span class="cursor"></span>`;
+  body.appendChild(h);
+
+  const hero=document.createElement('div'); hero.className='score-hero';
+  const pct = Math.round(r.score/r.total*100);
+  const streakLine = state.lastBestStreak>=3 ? `<div class="score-verdict">🔥 best streak this run: ${state.lastBestStreak} in a row</div>` : '';
+  hero.innerHTML = `<div class="score-num">${r.score}/${r.total}</div>
+    <div class="score-of">${pct}% correct — <span style="color:${subj.color}">${subj.label}</span></div>
+    <div class="score-verdict">${verdict(pct)}</div>${streakLine}`;
+  body.appendChild(hero);
+
+  if(state.saveErr){
+    const e=document.createElement('div'); e.className='err'; e.style.textAlign='center';
+    e.textContent = 'your score could not be saved — '+state.saveErr;
+    body.appendChild(e);
+  } else if(r.total < MIN_Q_FOR_RANK){
+    const n=document.createElement('div'); n.className='note'; n.style.textAlign='center'; n.style.border='none'; n.style.marginTop='0';
+    n.textContent = `Saved to your history. Tests under ${MIN_Q_FOR_RANK} questions don't count toward rankings.`;
+    body.appendChild(n);
+  }
+
+  const h2=document.createElement('div'); h2.style.fontFamily='var(--mono)'; h2.style.fontSize='12px'; h2.style.color='var(--muted)'; h2.style.margin='18px 0 10px'; h2.textContent = subj.label.toUpperCase()+' — TOP RANKS';
+  body.appendChild(h2);
+  const lb=document.createElement('div'); body.appendChild(lb);
+
+  const nav=document.createElement('div'); nav.className='nav-row';
+  const again=document.createElement('button'); again.className='btn'; again.textContent='retake this subject';
+  again.onclick = ()=> startQuiz(r.subject);
+  const dash=document.createElement('button'); dash.className='btn ghost'; dash.textContent='back to subjects';
+  dash.onclick = ()=>{ state.screen='dashboard'; render(); };
+  const allrank=document.createElement('button'); allrank.className='btn ghost'; allrank.textContent='view full rankings →';
+  allrank.onclick = ()=>{ state.screen='rankings'; render(); };
+  nav.appendChild(again); nav.appendChild(dash); nav.appendChild(allrank);
+  body.appendChild(nav);
+
+  leaderboardInto(lb, r.subject);
+}
+
+function verdict(pct){
+  if(pct===100) return 'Flawless run. Nothing left uncovered.';
+  if(pct>=80) return 'Strong result — you know this material well.';
+  if(pct>=60) return 'Solid, with a few gaps worth revisiting.';
+  if(pct>=40) return 'Middling — another pass through the basics will help.';
+  return 'Rough round. Review the fundamentals and try again.';
+}
+
+/* ---------------- RANKINGS ---------------- */
+function renderRankings(body){
+  body.appendChild(brandRow(true));
+  const h=document.createElement('h1'); h.className='hero';
+  h.innerHTML='rankings<span class="cursor"></span>';
+  body.appendChild(h);
+  const p=document.createElement('p'); p.className='sub';
+  p.textContent = state.rankSubjectFilter==='all'
+    ? 'Overall = the sum of each person\'s best score in every subject, so trying more subjects earns more points.'
+    : 'Best score per person in this subject. Switch tabs to compare.';
+  body.appendChild(p);
+
+  const tabbar=document.createElement('div'); tabbar.className='tabbar';
+  const mkTab=(id,label)=>{
+    const t=document.createElement('div'); t.className='tab'+(state.rankSubjectFilter===id?' active':''); t.textContent=label;
+    t.onclick = ()=>{ state.rankSubjectFilter=id; render(); };
+    tabbar.appendChild(t);
+  };
+  mkTab('all','overall');
+  SUBJECTS.forEach(s=>mkTab(s.id,s.label));
+  body.appendChild(tabbar);
+
+  const lb=document.createElement('div'); body.appendChild(lb);
+
+  const nav=document.createElement('div'); nav.className='nav-row';
+  const dash=document.createElement('button'); dash.className='btn ghost'; dash.textContent='← back to subjects';
+  dash.onclick = ()=>{ state.screen='dashboard'; render(); };
+  const refresh=document.createElement('button'); refresh.className='btn ghost'; refresh.textContent='refresh';
+  refresh.onclick = ()=>{ lbCache=null; render(); };
+  nav.appendChild(dash); nav.appendChild(refresh);
+  body.appendChild(nav);
+
+  const note=document.createElement('div'); note.className='note';
+  note.textContent = 'Only display names and scores are shared on this board — emails are never stored here. Tests shorter than '+MIN_Q_FOR_RANK+' questions don\'t count.';
+  body.appendChild(note);
+
+  leaderboardInto(lb, state.rankSubjectFilter);
+}
+
+render();
+
+</script>
+</body>
+</html>

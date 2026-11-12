@@ -1,0 +1,6 @@
+{
+  "name": "compile&rank — Placement & Competitive Test Prep",
+  "description": "Unlimited non-repeating practice tests across Python, Java, C, C++, HTML/CSS, CRT Aptitude, General Knowledge, NEET, and JEE Mains with detailed explanations and global Firebase leaderboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

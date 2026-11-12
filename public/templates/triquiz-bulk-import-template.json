@@ -1,0 +1,51 @@
+{
+  "questions": [
+    {
+      "subjectId": "python",
+      "topic": "Functions",
+      "subtopic": "Function arguments (*args, **kwargs)",
+      "difficulty": "medium",
+      "question": "In Python, what is the type of the parameter `kwargs` inside `def inspect(**kwargs):`?",
+      "options": [
+        "dict",
+        "tuple",
+        "list",
+        "set"
+      ],
+      "correctIndex": 0,
+      "explanation": "Double-asterisk `**kwargs` collects arbitrary keyword arguments passed to a function into a standard Python `dict` mapping parameter names to values."
+    },
+    {
+      "subjectId": "jee",
+      "topic": "Physics",
+      "subtopic": "Kinematics, Newton Laws & Rotational Mechanics",
+      "difficulty": "medium",
+      "question": "A projectile is launched at 45° to the horizontal with initial kinetic energy K. What is its kinetic energy at the highest point of its trajectory (neglecting air resistance)?",
+      "options": [
+        "K / 2",
+        "K / 4",
+        "K / sqrt(2)",
+        "Zero"
+      ],
+      "correctIndex": 0,
+      "explanation": "At the highest point of a projectile's path, the vertical velocity component is zero and only the horizontal component `u cos(45°) = u / sqrt(2)` remains. Thus `K_top = (1/2) m (u / sqrt(2))^2 = K / 2`."
+    },
+    {
+      "subjectId": "gk",
+      "topic": "Current affairs",
+      "subtopic": "Space & Science Milestones",
+      "difficulty": "easy",
+      "question": "Which solar observatory spacecraft was launched by ISRO on 2 September 2023 aboard PSLV-C57 to study the Sun from Halo Orbit around Lagrange Point L1?",
+      "options": [
+        "Aditya-L1",
+        "AstroSat-2",
+        "XPoSat",
+        "Gaganyaan-1"
+      ],
+      "correctIndex": 0,
+      "explanation": "Aditya-L1, India's first dedicated space-based solar mission, was launched by ISRO on 2 September 2023 aboard PSLV-C57 and inserted into a halo orbit around the Sun-Earth L1 point on 6 January 2024.",
+      "eventDate": "2023-09-02",
+      "verifiedSource": "ISRO Official Mission Page (isro.gov.in/Aditya_L1.html)"
+    }
+  ]
+}

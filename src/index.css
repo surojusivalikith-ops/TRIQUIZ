@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0d1117;
+  --panel: #12181f;
+  --panel-2: #161d26;
+  --panel-3: #1b2430;
+  --line: #232b35;
+  --line-hover: #364252;
+  --text: #e6edf3;
+  --muted: #8b96a3;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --accent: #00d9a0;
+  --accent-dim: #0a3d31;
+  --red: #ff6b6b;
+  --amber: #ffb454;
+  --py: #4b8bbe;
+  --java: #e76f51;
+  --c: #5da9e9;
+  --cpp: #f28ab2;
+  --html: #ff9d5c;
+  --crt: #b48ce0;
+  --gk: #6fcf97;
+  --neet: #e0b04b;
+  --jee: #5ce0c6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(0, 217, 160, 0.06), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(228, 111, 81, 0.05), transparent 40%);
+}
+
+::selection {
+  background: var(--accent);
+  color: #04140f;
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.terminal-cursor {
+  display: inline-block;
+  width: 9px;
+  height: 20px;
+  background: var(--accent);
+  margin-left: 6px;
+  animation: cursor-blink 1s steps(1) infinite;
+  vertical-align: -3px;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,328 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string
+        && id.size() >= 20
+        && id.size() <= 64
+        && id.matches('^[a-zA-Z0-9]+$')
+        && !id.matches('^(?i)(usr|local|demo|fake|seed|test|mock|anon).*')
+        && !id.matches('.*(?i)(firestore|rules|optimiz|config|snippet|doc).*');
+    }
+
+    function isValidDocId(id) {
+      return id is string
+        && id.size() >= 1
+        && id.size() <= 128
+        && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Server-controlled Administrator Authorization:
+    // Requires verified email AND either a server-minted custom claim (`admin: true` or `role: 'admin'`)
+    // OR a server-provisioned document in `/admins/{uid}` (which clients can never write).
+    // Uses `.get(key, default)` so tokens without custom claims never throw undefined property errors.
+    function isAdmin() {
+      return isVerified() && (
+        request.auth.token.get('admin', false) == true ||
+        request.auth.token.get('role', '') == 'admin' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidSubjectScore(sub) {
+      return sub is map
+        && sub.keys().hasAll(['score', 'total'])
+        && sub.keys().hasOnly(['score', 'total', 'pct', 'updatedAt'])
+        && sub.score is int
+        && sub.total is int
+        && sub.total >= 10
+        && sub.total <= 500
+        && sub.score >= 0
+        && sub.score <= sub.total
+        && (!('pct' in sub) || ((sub.pct is int || sub.pct is float) && sub.pct >= 0 && sub.pct <= 100));
+    }
+
+    function checkOptSubject(subs, k) {
+      return !(k in subs) || isValidSubjectScore(subs[k]);
+    }
+
+    function allNestedSubjectsValid(subs) {
+      return subs.keys().hasOnly(['python', 'java', 'c', 'cpp', 'html', 'crt', 'gk', 'neet', 'jee'])
+        && checkOptSubject(subs, 'python')
+        && checkOptSubject(subs, 'java')
+        && checkOptSubject(subs, 'c')
+        && checkOptSubject(subs, 'cpp')
+        && checkOptSubject(subs, 'html')
+        && checkOptSubject(subs, 'crt')
+        && checkOptSubject(subs, 'gk')
+        && checkOptSubject(subs, 'neet')
+        && checkOptSubject(subs, 'jee');
+    }
+
+    function subjScore(subs, k) {
+      return (k in subs) ? subs[k].score : 0;
+    }
+
+    function subjTotal(subs, k) {
+      return (k in subs) ? subs[k].total : 0;
+    }
+
+    function sumSubjectScores(subs) {
+      return subjScore(subs, 'python')
+        + subjScore(subs, 'java')
+        + subjScore(subs, 'c')
+        + subjScore(subs, 'cpp')
+        + subjScore(subs, 'html')
+        + subjScore(subs, 'crt')
+        + subjScore(subs, 'gk')
+        + subjScore(subs, 'neet')
+        + subjScore(subs, 'jee');
+    }
+
+    function sumSubjectTotals(subs) {
+      return subjTotal(subs, 'python')
+        + subjTotal(subs, 'java')
+        + subjTotal(subs, 'c')
+        + subjTotal(subs, 'cpp')
+        + subjTotal(subs, 'html')
+        + subjTotal(subs, 'crt')
+        + subjTotal(subs, 'gk')
+        + subjTotal(subs, 'neet')
+        + subjTotal(subs, 'jee');
+    }
+
+    function isValidScoreDoc(data) {
+      return data.keys().hasAll([
+          'name',
+          'subjects',
+          'overallScore',
+          'overallTotal',
+          'overallPct',
+          'subjectsCount',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'subjects',
+          'overallScore',
+          'overallTotal',
+          'overallPct',
+          'subjectsCount',
+          'updatedAt'
+        ])
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 40
+        && !data.name.matches('.*(?i)(hardened firestore|security rules|query optimization|rules_version|tri-quiz|service cloud\\.firestore).*')
+        && data.subjects is map
+        && data.subjects.size() >= 1
+        && data.subjects.size() <= 9
+        && allNestedSubjectsValid(data.subjects)
+        && data.overallScore is int
+        && data.overallScore >= 0
+        && data.overallScore == sumSubjectScores(data.subjects)
+        && data.overallTotal is int
+        && data.overallTotal >= 10
+        && data.overallTotal == sumSubjectTotals(data.subjects)
+        && data.overallScore <= data.overallTotal
+        && (data.overallPct is int || data.overallPct is float)
+        && data.overallPct >= 0
+        && data.overallPct <= 100
+        && (data.overallPct * data.overallTotal) >= ((data.overallScore * 100) - data.overallTotal)
+        && (data.overallPct * data.overallTotal) <= ((data.overallScore * 100) + data.overallTotal)
+        && data.subjectsCount is int
+        && data.subjectsCount == data.subjects.size()
+        && data.updatedAt == request.time;
+    }
+
+    function isValidAttemptDoc(data) {
+      return data.keys().hasAll(['subject', 'score', 'total', 'ts'])
+        && data.keys().hasOnly(['subject', 'score', 'total', 'ts', 'attemptId', 'mode'])
+        && data.subject is string
+        && data.subject in ['python', 'java', 'c', 'cpp', 'html', 'crt', 'gk', 'neet', 'jee']
+        && data.total is int
+        && data.total >= 1
+        && data.total <= 500
+        && data.score is int
+        && data.score >= 0
+        && data.score <= data.total
+        && data.ts == request.time;
+    }
+
+    function isValidQuestionHistoryDoc(data, subjectId) {
+      return subjectId in ['python', 'java', 'c', 'cpp', 'html', 'crt', 'gk', 'neet', 'jee']
+        && data.keys().hasAll(['subject', 'seenFingerprints', 'attemptedFingerprints', 'updatedAt'])
+        && data.keys().hasOnly(['subject', 'seenFingerprints', 'attemptedFingerprints', 'topicsSeen', 'updatedAt'])
+        && data.subject == subjectId
+        && data.seenFingerprints is list
+        && data.seenFingerprints.size() <= 2500
+        && data.attemptedFingerprints is list
+        && data.attemptedFingerprints.size() <= 2500
+        && data.updatedAt == request.time;
+    }
+
+    function isValidQuestionBankDoc(data) {
+      return data.keys().hasAll([
+          'subjectId',
+          'topic',
+          'subtopic',
+          'difficulty',
+          'type',
+          'question',
+          'options',
+          'correctIndex',
+          'explanation',
+          'status',
+          'fingerprint',
+          'source',
+          'createdAt',
+          'updatedAt',
+          'createdBy'
+        ])
+        && data.keys().hasOnly([
+          'subjectId',
+          'topic',
+          'subtopic',
+          'difficulty',
+          'type',
+          'question',
+          'options',
+          'correctIndex',
+          'explanation',
+          'status',
+          'fingerprint',
+          'contentSignature',
+          'source',
+          'eventDate',
+          'verifiedSource',
+          'createdAt',
+          'updatedAt',
+          'createdBy',
+          'reviewedBy'
+        ])
+        && data.subjectId is string
+        && data.subjectId in ['python', 'java', 'c', 'cpp', 'html', 'crt', 'gk', 'neet', 'jee']
+        && data.topic is string
+        && data.topic.size() >= 1
+        && data.topic.size() <= 120
+        && data.subtopic is string
+        && data.subtopic.size() >= 1
+        && data.subtopic.size() <= 160
+        && data.difficulty is string
+        && data.difficulty in ['easy', 'medium', 'hard']
+        && data.type is string
+        && data.type == 'single_choice'
+        && data.question is string
+        && data.question.size() >= 3
+        && data.question.size() <= 4000
+        && data.options is list
+        && data.options.size() == 4
+        && data.options[0] is string && data.options[0].size() >= 1 && data.options[0].size() <= 1000
+        && data.options[1] is string && data.options[1].size() >= 1 && data.options[1].size() <= 1000
+        && data.options[2] is string && data.options[2].size() >= 1 && data.options[2].size() <= 1000
+        && data.options[3] is string && data.options[3].size() >= 1 && data.options[3].size() <= 1000
+        && data.correctIndex is int
+        && data.correctIndex >= 0
+        && data.correctIndex <= 3
+        && data.explanation is string
+        && data.explanation.size() >= 3
+        && data.explanation.size() <= 5000
+        && data.status is string
+        && data.status in ['draft', 'published', 'archived']
+        && data.fingerprint is string
+        && data.fingerprint.size() >= 5
+        && data.fingerprint.size() <= 1024
+        && data.source is string
+        && data.source in ['curated', 'imported', 'migrated', 'admin']
+        && (!('contentSignature' in data) || (data.contentSignature is string && data.contentSignature.size() <= 1024))
+        && (!('eventDate' in data) || (data.eventDate is string && data.eventDate.size() <= 80))
+        && (!('verifiedSource' in data) || (data.verifiedSource is string && data.verifiedSource.size() <= 500))
+        && (!('reviewedBy' in data) || (data.reviewedBy is string && data.reviewedBy.size() <= 128))
+        && data.createdBy is string
+        && isValidId(data.createdBy)
+        && data.updatedAt == request.time;
+    }
+
+    // SERVER-CONTROLLED ADMIN REGISTRY (Strictly read-only for owner; never client-writable)
+    match /admins/{adminUid} {
+      allow get: if isSignedIn() && request.auth.uid == adminUid && isValidId(adminUid);
+      allow list, create, update, delete: if false;
+    }
+
+    // GLOBAL CURATED QUESTION BANK
+    // Students can only read published questions (`resource.data.status == 'published'`).
+    // Only authorized administrators (`isAdmin()`) can read draft/archived questions or create/update/delete.
+    match /questionBank/{questionId} {
+      allow get: if isValidDocId(questionId) && (
+        (isSignedIn() && resource.data.status == 'published') ||
+        isAdmin()
+      );
+      allow list: if (isSignedIn() && resource.data.status == 'published') || isAdmin();
+      allow create: if isValidDocId(questionId)
+        && isValidQuestionBankDoc(incoming())
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && isAdmin();
+      allow update: if isValidDocId(questionId)
+        && isValidQuestionBankDoc(incoming())
+        && (incoming().createdBy == existing().createdBy || incoming().createdBy == request.auth.uid)
+        && (incoming().createdAt == existing().createdAt || incoming().createdAt == request.time)
+        && isAdmin();
+      allow delete: if isValidDocId(questionId) && isAdmin();
+    }
+
+    // PUBLIC LEADERBOARD SCORES (No PII/emails stored here)
+    match /scores/{uid} {
+      allow get: if isSignedIn() && isValidId(uid);
+      allow list: if isSignedIn();
+      allow create, update: if isVerified()
+        && request.auth.uid == uid
+        && isValidId(uid)
+        && isValidScoreDoc(incoming());
+      allow delete: if false;
+    }
+
+    // PRIVATE USER ATTEMPT HISTORY (Strictly isolated to owner)
+    match /users/{uid}/attempts/{attemptId} {
+      allow get: if isSignedIn() && request.auth.uid == uid && isValidId(uid) && isValidDocId(attemptId);
+      allow list: if isSignedIn() && request.auth.uid == uid && isValidId(uid);
+      allow create: if isVerified()
+        && request.auth.uid == uid
+        && isValidId(uid)
+        && isValidDocId(attemptId)
+        && isValidAttemptDoc(incoming());
+      allow update, delete: if false;
+    }
+
+    // PRIVATE USER QUESTION HISTORY (Strictly isolated to owner)
+    match /users/{uid}/questionHistory/{subjectId} {
+      allow get, list: if isSignedIn() && request.auth.uid == uid && isValidId(uid);
+      allow create, update: if isSignedIn()
+        && request.auth.uid == uid
+        && isValidId(uid)
+        && isValidQuestionHistoryDoc(incoming(), subjectId);
+      allow delete: if false;
+    }
+  }
+}

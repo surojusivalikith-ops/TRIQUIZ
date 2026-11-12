@@ -1,0 +1,252 @@
+{
+  "entities": {
+    "AdminRole": {
+      "title": "AdminRole",
+      "description": "Server-provisioned administrator authorization record. Read-only for the authenticated owner; never writable from client SDKs.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Authentication UID of the administrator.",
+          "minLength": 20,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9]+$"
+        },
+        "role": {
+          "type": "string",
+          "description": "Assigned role identifier.",
+          "enum": ["admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when admin access was provisioned."
+        }
+      },
+      "required": ["uid", "role", "createdAt"]
+    },
+    "QuestionBankItem": {
+      "title": "QuestionBankItem",
+      "description": "Curated multiple-choice question document stored in the global questionBank collection.",
+      "type": "object",
+      "properties": {
+        "subjectId": {
+          "type": "string",
+          "description": "Subject module identifier.",
+          "enum": ["python", "java", "c", "cpp", "html", "crt", "gk", "neet", "jee"]
+        },
+        "topic": {
+          "type": "string",
+          "description": "Primary curriculum topic within the subject.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "subtopic": {
+          "type": "string",
+          "description": "Granular subtopic within the curriculum topic.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "difficulty": {
+          "type": "string",
+          "description": "Difficulty classification.",
+          "enum": ["easy", "medium", "hard"]
+        },
+        "type": {
+          "type": "string",
+          "description": "Question interaction type.",
+          "enum": ["single_choice"]
+        },
+        "question": {
+          "type": "string",
+          "description": "Question prompt text.",
+          "minLength": 5,
+          "maxLength": 2000
+        },
+        "options": {
+          "type": "array",
+          "description": "Four multiple-choice answer options."
+        },
+        "correctIndex": {
+          "type": "integer",
+          "description": "Zero-based index (0 to 3) of the verified correct option."
+        },
+        "explanation": {
+          "type": "string",
+          "description": "Step-by-step explanation of why the correct option is right.",
+          "minLength": 10,
+          "maxLength": 3000
+        },
+        "status": {
+          "type": "string",
+          "description": "Publication lifecycle status.",
+          "enum": ["draft", "published", "archived"]
+        },
+        "fingerprint": {
+          "type": "string",
+          "description": "Canonical deduplication fingerprint.",
+          "minLength": 10,
+          "maxLength": 512
+        },
+        "source": {
+          "type": "string",
+          "description": "Provenance of the question record.",
+          "enum": ["curated", "imported", "migrated", "admin"]
+        },
+        "eventDate": {
+          "type": "string",
+          "description": "Optional date of event for GK current affairs.",
+          "maxLength": 40
+        },
+        "verifiedSource": {
+          "type": "string",
+          "description": "Optional verified citation source for GK current affairs.",
+          "maxLength": 300
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when question was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when question was last updated."
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "Firebase Auth UID of the administrator who created the record.",
+          "minLength": 20,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9]+$"
+        }
+      },
+      "required": [
+        "subjectId",
+        "topic",
+        "subtopic",
+        "difficulty",
+        "type",
+        "question",
+        "options",
+        "correctIndex",
+        "explanation",
+        "status",
+        "fingerprint",
+        "source",
+        "createdAt",
+        "updatedAt",
+        "createdBy"
+      ]
+    },
+    "UserScore": {
+      "title": "UserScore",
+      "description": "Public aggregated leaderboard score document per authenticated user.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "subjects": {
+          "type": "object"
+        },
+        "overallScore": {
+          "type": "integer"
+        },
+        "overallTotal": {
+          "type": "integer"
+        },
+        "overallPct": {
+          "type": "number"
+        },
+        "subjectsCount": {
+          "type": "integer"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "name",
+        "subjects",
+        "overallScore",
+        "overallTotal",
+        "overallPct",
+        "subjectsCount",
+        "updatedAt"
+      ]
+    },
+    "QuizAttempt": {
+      "title": "QuizAttempt",
+      "description": "Private immutable record of a single completed quiz attempt.",
+      "type": "object",
+      "properties": {
+        "subject": {
+          "type": "string",
+          "enum": ["python", "java", "c", "cpp", "html", "crt", "gk", "neet", "jee"]
+        },
+        "score": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "ts": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["subject", "score", "total", "ts"]
+    },
+    "SubjectQuestionHistory": {
+      "title": "SubjectQuestionHistory",
+      "description": "Private per-user question fingerprint history per subject.",
+      "type": "object",
+      "properties": {
+        "subject": {
+          "type": "string",
+          "enum": ["python", "java", "c", "cpp", "html", "crt", "gk", "neet", "jee"]
+        },
+        "seenFingerprints": {
+          "type": "array"
+        },
+        "attemptedFingerprints": {
+          "type": "array"
+        },
+        "topicsSeen": {
+          "type": "array"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["subject", "seenFingerprints", "attemptedFingerprints", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/admins/{adminUid}": {
+      "schema": "AdminRole",
+      "description": "Server-managed administrator registry. Client writes are strictly forbidden."
+    },
+    "/questionBank/{questionId}": {
+      "schema": "QuestionBankItem",
+      "description": "Global curated question bank. Students may only read published documents; only verified administrators may read drafts/archived or write documents."
+    },
+    "/scores/{uid}": {
+      "schema": "UserScore",
+      "description": "Global leaderboard scores collection."
+    },
+    "/users/{uid}/attempts/{attemptId}": {
+      "schema": "QuizAttempt",
+      "description": "Private per-user quiz attempt history."
+    },
+    "/users/{uid}/questionHistory/{subjectId}": {
+      "schema": "SubjectQuestionHistory",
+      "description": "Private per-user seen and attempted question fingerprints."
+    }
+  }
+}
