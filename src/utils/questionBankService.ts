@@ -106,6 +106,9 @@ export interface SubjectBankStats {
   targetCount: number;
   remainingToTarget: number;
   topics: Record<string, number>;
+  firestoreConfirmed: number;
+  localCurated: number;
+  pendingSync: number;
 }
 
 export interface QuestionBankOverviewStats {
@@ -115,6 +118,9 @@ export interface QuestionBankOverviewStats {
   archivedQuestions: number;
   targetTotalQuestions: number;
   remainingTotalToTarget: number;
+  firestoreConfirmedQuestions: number;
+  localCuratedQuestions: number;
+  pendingSyncQuestions: number;
   difficultyDistribution: {
     easy: number;
     medium: number;
@@ -1708,6 +1714,9 @@ export function computeQuestionBankOverviewStats(): QuestionBankOverviewStats {
       targetCount: TARGET_QUESTIONS_PER_SUBJECT,
       remainingToTarget: TARGET_QUESTIONS_PER_SUBJECT,
       topics: {},
+      firestoreConfirmed: 0,
+      localCurated: 0,
+      pendingSync: 0,
     };
   }
 
@@ -1718,6 +1727,9 @@ export function computeQuestionBankOverviewStats(): QuestionBankOverviewStats {
   let easyTotal = 0;
   let mediumTotal = 0;
   let hardTotal = 0;
+  let firestoreConfirmedQuestions = 0;
+  let localCuratedQuestions = 0;
+  let pendingSyncQuestions = 0;
 
   for (const doc of store.values()) {
     const subjStat = bySubject[doc.subjectId];
@@ -1725,6 +1737,18 @@ export function computeQuestionBankOverviewStats(): QuestionBankOverviewStats {
 
     totalQuestions++;
     subjStat.total++;
+
+    const isFirestoreSynced = remoteFirestoreSyncedIds.has(doc.id);
+    if (isFirestoreSynced) {
+      firestoreConfirmedQuestions++;
+      subjStat.firestoreConfirmed++;
+    } else if (doc.source === 'curated') {
+      localCuratedQuestions++;
+      subjStat.localCurated++;
+    } else {
+      pendingSyncQuestions++;
+      subjStat.pendingSync++;
+    }
 
     if (doc.status === 'published') {
       publishedQuestions++;
@@ -1771,6 +1795,9 @@ export function computeQuestionBankOverviewStats(): QuestionBankOverviewStats {
     archivedQuestions,
     targetTotalQuestions: TARGET_TOTAL_QUESTIONS,
     remainingTotalToTarget,
+    firestoreConfirmedQuestions,
+    localCuratedQuestions,
+    pendingSyncQuestions,
     difficultyDistribution: {
       easy: easyTotal,
       medium: mediumTotal,
@@ -2119,17 +2146,32 @@ export function parseBulkImportJSON(rawText: string): {
 } {
   try {
     const parsed = JSON.parse(rawText);
+    let rawList: unknown[] = [];
     if (Array.isArray(parsed)) {
-      return { records: parsed };
+      rawList = parsed;
+    } else if (parsed && typeof parsed === 'object' && Array.isArray((parsed as any).questions)) {
+      rawList = (parsed as any).questions;
+    } else {
+      return {
+        records: [],
+        parseError:
+          'JSON root must be an array of question objects or `{ "questions": [...] }`.',
+      };
     }
-    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.questions)) {
-      return { records: parsed.questions };
+
+    const records: Record<string, unknown>[] = [];
+    for (let i = 0; i < rawList.length; i++) {
+      const item = rawList[i];
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        records.push({
+          __parseError: `Record #${i + 1}: Expected a question object, but found ${item === null ? 'null' : typeof item}.`,
+        });
+      } else {
+        records.push(item as Record<string, unknown>);
+      }
     }
-    return {
-      records: [],
-      parseError:
-        'JSON root must be an array of question objects or `{ "questions": [...] }`.',
-    };
+
+    return { records };
   } catch (err) {
     return {
       records: [],
@@ -2140,76 +2182,213 @@ export function parseBulkImportJSON(rawText: string): {
 }
 
 /**
- * RFC-4180 compliant CSV parser supporting quoted commas and escaped quotes.
+ * RFC-4180 compliant CSV parser that correctly handles:
+ * - Multiline text fields enclosed in double quotes (preserving newlines in questions/explanations)
+ * - Escaped double quotes ("")
+ * - Commas inside quoted fields
+ * - Column count validation and clear error reporting
  */
-function parseCsvRow(line: string): string[] {
-  const cells: string[] = [];
-  let cur = '';
+function parseCsvToMatrix(rawCsv: string): {
+  rows: { lineNum: number; cells: string[] }[];
+  parseError?: string;
+} {
+  const rows: { lineNum: number; cells: string[] }[] = [];
+  let currentCells: string[] = [];
+  let currentCell = '';
   let inQuotes = false;
+  let isQuotedCell = false;
+  let lineNum = 1;
+  let rowStartLine = 1;
+  let i = 0;
+  const len = rawCsv.length;
 
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
+  while (i < len) {
+    const ch = rawCsv[i];
+
     if (inQuotes) {
-      if (ch === '"' && line[i + 1] === '"') {
-        cur += '"';
-        i++;
-      } else if (ch === '"') {
-        inQuotes = false;
+      if (ch === '"') {
+        if (i + 1 < len && rawCsv[i + 1] === '"') {
+          currentCell += '"';
+          i += 2;
+        } else {
+          inQuotes = false;
+          i++;
+        }
       } else {
-        cur += ch;
+        if (ch === '\n') {
+          lineNum++;
+        }
+        currentCell += ch;
+        i++;
       }
     } else {
       if (ch === '"') {
         inQuotes = true;
+        isQuotedCell = true;
+        i++;
       } else if (ch === ',') {
-        cells.push(cur.trim());
-        cur = '';
+        currentCells.push(isQuotedCell ? currentCell : currentCell.trim());
+        currentCell = '';
+        isQuotedCell = false;
+        i++;
+      } else if (ch === '\r') {
+        if (i + 1 < len && rawCsv[i + 1] === '\n') {
+          i += 2;
+        } else {
+          i++;
+        }
+        currentCells.push(isQuotedCell ? currentCell : currentCell.trim());
+        currentCell = '';
+        isQuotedCell = false;
+        if (currentCells.some((c) => c.length > 0)) {
+          rows.push({ lineNum: rowStartLine, cells: currentCells });
+        }
+        currentCells = [];
+        lineNum++;
+        rowStartLine = lineNum;
+      } else if (ch === '\n') {
+        i++;
+        currentCells.push(isQuotedCell ? currentCell : currentCell.trim());
+        currentCell = '';
+        isQuotedCell = false;
+        if (currentCells.some((c) => c.length > 0)) {
+          rows.push({ lineNum: rowStartLine, cells: currentCells });
+        }
+        currentCells = [];
+        lineNum++;
+        rowStartLine = lineNum;
       } else {
-        cur += ch;
+        currentCell += ch;
+        i++;
       }
     }
   }
-  cells.push(cur.trim());
-  return cells;
+
+  if (inQuotes) {
+    return {
+      rows: [],
+      parseError: `Malformed CSV: Unclosed quoted string starting at or before line ${rowStartLine}.`,
+    };
+  }
+
+  currentCells.push(isQuotedCell ? currentCell : currentCell.trim());
+  if (currentCells.some((c) => c.length > 0)) {
+    rows.push({ lineNum: rowStartLine, cells: currentCells });
+  }
+
+  return { rows };
 }
 
 export function parseBulkImportCSV(rawCsv: string): {
   records: Record<string, unknown>[];
   parseError?: string;
 } {
-  const lines = rawCsv
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    .split('\n')
-    .filter((l) => l.trim().length > 0);
+  const { rows, parseError } = parseCsvToMatrix(rawCsv);
+  if (parseError) {
+    return { records: [], parseError };
+  }
 
-  if (lines.length < 2) {
+  if (rows.length < 2) {
     return {
       records: [],
-      parseError:
-        'CSV must include a header row and at least one question row.',
+      parseError: 'CSV must include a header row and at least one question row.',
     };
   }
 
-  const headers = parseCsvRow(lines[0]).map((h) =>
-    h.toLowerCase().replace(/[^a-z0-9]/g, '')
-  );
+  const rawHeaders = rows[0].cells;
+  const canonicalAliases: Record<string, string> = {
+    subjectid: 'subjectId',
+    subject: 'subjectId',
+    topic: 'topic',
+    category: 'topic',
+    cat: 'topic',
+    subtopic: 'subtopic',
+    difficulty: 'difficulty',
+    question: 'question',
+    text: 'question',
+    stem: 'question',
+    optiona: 'optionA',
+    option1: 'optionA',
+    opta: 'optionA',
+    opt1: 'optionA',
+    a: 'optionA',
+    '1': 'optionA',
+    optionb: 'optionB',
+    option2: 'optionB',
+    optb: 'optionB',
+    opt2: 'optionB',
+    b: 'optionB',
+    '2': 'optionB',
+    optionc: 'optionC',
+    option3: 'optionC',
+    optc: 'optionC',
+    opt3: 'optionC',
+    c: 'optionC',
+    '3': 'optionC',
+    optiond: 'optionD',
+    option4: 'optionD',
+    optd: 'optionD',
+    opt4: 'optionD',
+    d: 'optionD',
+    '4': 'optionD',
+    correctindex: 'correctIndex',
+    correct: 'correctIndex',
+    ans: 'correctIndex',
+    answer: 'correctIndex',
+    answerkey: 'correctIndex',
+    correctanswer: 'correctIndex',
+    correctoption: 'correctIndex',
+    answeroption: 'correctIndex',
+    explanation: 'explanation',
+    exp: 'explanation',
+    reason: 'explanation',
+    eventdate: 'eventDate',
+    date: 'eventDate',
+    verifiedsource: 'verifiedSource',
+    source: 'verifiedSource',
+  };
+
+  const headerKeys: string[] = rawHeaders.map((h) => {
+    const norm = h.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return canonicalAliases[norm] || norm;
+  });
+
+  const requiredFields = [
+    'subjectId',
+    'question',
+    'optionA',
+    'optionB',
+    'optionC',
+    'optionD',
+    'correctIndex',
+    'explanation',
+  ];
+  const missing = requiredFields.filter((rf) => !headerKeys.includes(rf));
+  if (missing.length > 0) {
+    return {
+      records: [],
+      parseError: `CSV header is missing required column(s): ${missing.join(', ')}. Found headers: ${rawHeaders.join(', ')}.`,
+    };
+  }
 
   const records: Record<string, unknown>[] = [];
-  for (let r = 1; r < lines.length; r++) {
-    const cols = parseCsvRow(lines[r]);
+  const expectedColCount = rawHeaders.length;
+
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (row.cells.length !== expectedColCount) {
+      records.push({
+        __parseError: `Row ${r + 1} (line ${row.lineNum}): Column count mismatch. Expected ${expectedColCount} columns, but found ${row.cells.length}.`,
+      });
+      continue;
+    }
+
     const rowObj: Record<string, string> = {};
-    headers.forEach((h, idx) => {
-      rowObj[h] = cols[idx] ?? '';
+    headerKeys.forEach((key, idx) => {
+      rowObj[key] = row.cells[idx] ?? '';
     });
 
-    const optionA = rowObj.optiona ?? rowObj.opta ?? rowObj.a ?? '';
-    const optionB = rowObj.optionb ?? rowObj.optb ?? rowObj.b ?? '';
-    const optionC = rowObj.optionc ?? rowObj.optc ?? rowObj.c ?? '';
-    const optionD = rowObj.optiond ?? rowObj.optd ?? rowObj.d ?? '';
-
-    let rawCorrect =
-      rowObj.correctindex ?? rowObj.correct ?? rowObj.ans ?? rowObj.answer ?? '';
+    let rawCorrect = rowObj.correctIndex ?? '';
     let correctIndex: number | string = rawCorrect;
     if (/^[A-Da-d]$/.test(rawCorrect.trim())) {
       correctIndex = rawCorrect.trim().toUpperCase().charCodeAt(0) - 65;
@@ -2218,16 +2397,21 @@ export function parseBulkImportCSV(rawCsv: string): {
     }
 
     records.push({
-      subjectId: rowObj.subjectid || rowObj.subject || '',
-      topic: rowObj.topic || rowObj.category || rowObj.cat || '',
+      subjectId: rowObj.subjectId || '',
+      topic: rowObj.topic || '',
       subtopic: rowObj.subtopic || 'Core Concepts',
       difficulty: rowObj.difficulty || 'medium',
-      question: rowObj.question || rowObj.text || '',
-      options: [optionA, optionB, optionC, optionD],
+      question: rowObj.question || '',
+      options: [
+        rowObj.optionA || '',
+        rowObj.optionB || '',
+        rowObj.optionC || '',
+        rowObj.optionD || '',
+      ],
       correctIndex,
-      explanation: rowObj.explanation || rowObj.exp || '',
-      eventDate: rowObj.eventdate || undefined,
-      verifiedSource: rowObj.verifiedsource || undefined,
+      explanation: rowObj.explanation || '',
+      eventDate: rowObj.eventDate || undefined,
+      verifiedSource: rowObj.verifiedSource || undefined,
     });
   }
 
@@ -2258,6 +2442,34 @@ export function validateBulkImportBatch(
   const now = Date.now();
 
   records.forEach((raw, idx) => {
+    if (raw && typeof (raw as any).__parseError === 'string') {
+      rejectedCount++;
+      rows.push({
+        rowIndex: idx + 1,
+        rawRecord: raw,
+        valid: false,
+        canImportAsDraft: false,
+        errors: [(raw as any).__parseError as string],
+        warnings: [],
+        duplicateMatches: [],
+      });
+      return;
+    }
+
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      rejectedCount++;
+      rows.push({
+        rowIndex: idx + 1,
+        rawRecord: { value: String(raw) },
+        valid: false,
+        canImportAsDraft: false,
+        errors: ['Record must be a valid question object.'],
+        warnings: [],
+        duplicateMatches: [],
+      });
+      return;
+    }
+
     const normalizedInput = {
       subjectId: raw.subjectId ?? raw.subject,
       topic: raw.topic ?? raw.cat ?? raw.category,
@@ -2369,15 +2581,24 @@ export function validateBulkImportBatch(
  */
 export function commitBulkImportDraftsToStore(
   summary: BulkImportValidationSummary
-): { importedCount: number;importedDocs: QuestionBankDocument[] } {
+): { importedCount: number; importedDocs: QuestionBankDocument[] } {
   const store = ensureQuestionBankStoreLoaded();
   const importedDocs: QuestionBankDocument[] = [];
 
   for (const row of summary.rows) {
     if (row.valid && row.preparedDoc) {
+      const existing = store.get(row.preparedDoc.id);
+      if (
+        existing &&
+        remoteFirestoreSyncedIds.has(existing.id) &&
+        existing.status === 'published'
+      ) {
+        importedDocs.push(existing);
+        continue;
+      }
       const doc: QuestionBankDocument = {
         ...row.preparedDoc,
-        status: 'draft',
+        status: existing?.status === 'published' ? 'published' : 'draft',
         source: 'imported',
       };
       store.set(doc.id, doc);

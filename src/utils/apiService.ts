@@ -32,6 +32,7 @@ import {
   deleteBulkImportedQuestionsFromStore,
   deleteQuestionFromStore,
   getUnsyncedCustomQuestions,
+  isQuestionSyncedToFirestore,
   markQuestionsSyncedToFirestore,
   mergeRemoteFirestoreQuestionsIntoStore,
   prepareIdempotentCuratedMigration,
@@ -1840,11 +1841,13 @@ export async function apiSyncPublishedQuestionsForSubject(
 }
 
 /**
- * Admin Action: Syncs questions (published, draft, and archived) from Firestore `questionBank`.
+ * Admin Action: Syncs questions (published, draft, and archived) from Firestore `questionBank`
+ * using cursor-based pagination (startAfter) to safely retrieve all documents without the 1,000-document limit.
  */
 export async function apiAdminSyncQuestionBank(
   currentUser: UserProfile,
-  subjectFilter?: string
+  subjectFilter?: string,
+  onProgress?: (syncedSoFar: number) => void
 ): Promise<{ syncedCount: number; syncError?: string }> {
   if (!currentUser.isAdmin) {
     throw new Error('Administrator authorization is required.');
@@ -1855,23 +1858,49 @@ export async function apiAdminSyncQuestionBank(
   }
 
   try {
-    const { collection, query, where, limit, getDocs } = fb.fbStoreMod;
+    const { collection, query, where, limit, startAfter, getDocs } =
+      fb.fbStoreMod;
     const colRef = collection(fb.db, 'questionBank');
-    const q =
-      subjectFilter && subjectFilter !== 'all'
-        ? query(colRef, where('subjectId', '==', subjectFilter), limit(1000))
-        : query(colRef, limit(1000));
-    const snap = await getDocs(q);
-    const docs: QuestionBankDocument[] = [];
-    snap.docs.forEach((d: any) => {
-      const parsed = parseFirestoreQuestionDoc(d.id, d.data());
-      if (parsed) docs.push(parsed);
-    });
-    if (docs.length > 0) {
-      mergeRemoteFirestoreQuestionsIntoStore(docs);
-      markQuestionsSyncedToFirestore(docs.map((d) => d.id));
+    const PAGE_SIZE = 500;
+    let lastDoc: any = null;
+    let hasMore = true;
+    const allFetchedDocs: QuestionBankDocument[] = [];
+
+    while (hasMore) {
+      const constraints: any[] = [];
+      if (subjectFilter && subjectFilter !== 'all') {
+        constraints.push(where('subjectId', '==', subjectFilter));
+      }
+      constraints.push(limit(PAGE_SIZE));
+      if (lastDoc) {
+        constraints.push(startAfter(lastDoc));
+      }
+
+      const q = query(colRef, ...constraints);
+      const snap = await getDocs(q);
+
+      snap.docs.forEach((d: any) => {
+        const parsed = parseFirestoreQuestionDoc(d.id, d.data());
+        if (parsed) allFetchedDocs.push(parsed);
+      });
+
+      if (snap.docs.length < PAGE_SIZE) {
+        hasMore = false;
+      } else {
+        lastDoc = snap.docs[snap.docs.length - 1];
+      }
+
+      if (onProgress) {
+        onProgress(allFetchedDocs.length);
+      }
     }
-    return { syncedCount: docs.length };
+
+    if (allFetchedDocs.length > 0) {
+      mergeRemoteFirestoreQuestionsIntoStore(allFetchedDocs);
+      markQuestionsSyncedToFirestore(allFetchedDocs.map((d) => d.id));
+    }
+
+    return { syncedCount: allFetchedDocs.length };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn('Admin Firestore sync warning:', msg);
@@ -2292,25 +2321,50 @@ export async function apiAdminDeleteBulkImportedQuestions(
   return { deletedCount, deletedFromFirestoreCount, firestoreSyncWarning };
 }
 
+export interface BulkImportBatchOutcome {
+  batchIndex: number;
+  count: number;
+  status: 'persisted' | 'failed';
+  error?: string;
+  questionIds: string[];
+}
+
+export interface BulkImportCommitResult {
+  totalDetected: number;
+  validReadyCount: number;
+  rejectedCount: number;
+  importedCount: number;
+  persistedToFirestoreCount: number;
+  failedCount: number;
+  pendingCount: number;
+  batchOutcomes: BulkImportBatchOutcome[];
+  firestoreSyncWarning?: string;
+}
+
 /**
  * Admin Action: Commits validated bulk-import records strictly as `status: 'draft'`
  * so unreviewed imports are never automatically published to students.
  * Uses CHUNK_SIZE = 10 so each batch triggers at most 10 `exists()` checks in Firestore rules.
+ * Continues processing subsequent batches even if one fails and maintains accurate per-batch reports.
  */
 export async function apiAdminCommitBulkImport(
   summary: BulkImportValidationSummary,
-  currentUser: UserProfile
-): Promise<{
-  importedCount: number;
-  persistedToFirestoreCount: number;
-  firestoreSyncWarning?: string;
-}> {
+  currentUser: UserProfile,
+  onProgress?: (progress: {
+    currentBatch: number;
+    totalBatches: number;
+    persistedCount: number;
+    failedCount: number;
+  }) => void
+): Promise<BulkImportCommitResult> {
   if (!currentUser.isAdmin) {
     throw new Error('Unauthorized: Only administrators can bulk-import questions.');
   }
 
   const { importedCount, importedDocs } = commitBulkImportDraftsToStore(summary);
   let persistedToFirestoreCount = 0;
+  let failedCount = 0;
+  const batchOutcomes: BulkImportBatchOutcome[] = [];
   let firestoreSyncWarning: string | undefined;
 
   const fb = await getFirebaseServices();
@@ -2322,8 +2376,11 @@ export async function apiAdminCommitBulkImport(
   ) {
     const { doc, writeBatch, serverTimestamp } = fb.fbStoreMod;
     const CHUNK_SIZE = 10;
+    const totalBatches = Math.ceil(importedDocs.length / CHUNK_SIZE);
+
     for (let i = 0; i < importedDocs.length; i += CHUNK_SIZE) {
       const slice = importedDocs.slice(i, i + CHUNK_SIZE);
+      const batchIdx = Math.floor(i / CHUNK_SIZE) + 1;
       const batch = writeBatch(fb.db);
       for (const d of slice) {
         const ref = doc(fb.db, 'questionBank', d.id);
@@ -2348,23 +2405,211 @@ export async function apiAdminCommitBulkImport(
           createdBy: currentUser.uid,
         });
       }
+
       try {
         await batch.commit();
         persistedToFirestoreCount += slice.length;
         markQuestionsSyncedToFirestore(slice.map((d) => d.id));
+        batchOutcomes.push({
+          batchIndex: batchIdx,
+          count: slice.length,
+          status: 'persisted',
+          questionIds: slice.map((d) => d.id),
+        });
       } catch (err) {
+        failedCount += slice.length;
+        const errMsg = err instanceof Error ? err.message : String(err);
         firestoreSyncWarning = recordNonFatalQuestionBankSyncWarning(
           err,
           OperationType.WRITE,
-          'questionBank (bulk import batch)',
+          `questionBank (bulk import batch #${batchIdx})`,
           fb.auth.currentUser
         );
-        break;
+        batchOutcomes.push({
+          batchIndex: batchIdx,
+          count: slice.length,
+          status: 'failed',
+          error: errMsg,
+          questionIds: slice.map((d) => d.id),
+        });
+        // Continue processing independent batches per Condition 5
+      }
+
+      if (onProgress) {
+        onProgress({
+          currentBatch: batchIdx,
+          totalBatches,
+          persistedCount: persistedToFirestoreCount,
+          failedCount,
+        });
       }
     }
+  } else if (!fb || !fb.auth.currentUser) {
+    failedCount = importedDocs.length;
+    firestoreSyncWarning =
+      'Cloud Firestore is currently offline or unauthenticated. Questions are staged locally as drafts.';
+    batchOutcomes.push({
+      batchIndex: 1,
+      count: importedDocs.length,
+      status: 'failed',
+      error: firestoreSyncWarning,
+      questionIds: importedDocs.map((d) => d.id),
+    });
   }
 
-  return { importedCount, persistedToFirestoreCount, firestoreSyncWarning };
+  const pendingCount = Math.max(0, importedCount - persistedToFirestoreCount);
+
+  return {
+    totalDetected: summary.totalRecords,
+    validReadyCount: summary.validReadyCount,
+    rejectedCount: summary.rejectedCount,
+    importedCount,
+    persistedToFirestoreCount,
+    failedCount,
+    pendingCount,
+    batchOutcomes,
+    firestoreSyncWarning,
+  };
+}
+
+/**
+ * Admin Action: Retries persisting unpersisted bulk-import records to Cloud Firestore.
+ * Does NOT re-upload already confirmed documents. Uses deterministic IDs for 100% idempotent writes.
+ */
+export async function apiAdminRetryBulkImport(
+  summary: BulkImportValidationSummary,
+  currentUser: UserProfile,
+  onProgress?: (progress: {
+    currentBatch: number;
+    totalBatches: number;
+    persistedCount: number;
+    failedCount: number;
+  }) => void
+): Promise<BulkImportCommitResult> {
+  if (!currentUser.isAdmin) {
+    throw new Error('Unauthorized: Only administrators can retry bulk imports.');
+  }
+
+  const validPreparedDocs = summary.rows
+    .filter((r) => r.valid && r.preparedDoc)
+    .map((r) => r.preparedDoc!);
+
+  const unpersistedDocs = validPreparedDocs.filter(
+    (d) => !isQuestionSyncedToFirestore(d.id)
+  );
+
+  const alreadyPersistedCount =
+    validPreparedDocs.length - unpersistedDocs.length;
+
+  if (unpersistedDocs.length === 0) {
+    return {
+      totalDetected: summary.totalRecords,
+      validReadyCount: summary.validReadyCount,
+      rejectedCount: summary.rejectedCount,
+      importedCount: validPreparedDocs.length,
+      persistedToFirestoreCount: alreadyPersistedCount,
+      failedCount: 0,
+      pendingCount: 0,
+      batchOutcomes: [],
+    };
+  }
+
+  const fb = await getFirebaseServices();
+  let newlyPersistedCount = 0;
+  let failedCount = 0;
+  const batchOutcomes: BulkImportBatchOutcome[] = [];
+  let firestoreSyncWarning: string | undefined;
+
+  if (fb && fb.auth.currentUser && fb.auth.currentUser.uid === currentUser.uid) {
+    const { doc, writeBatch, serverTimestamp } = fb.fbStoreMod;
+    const CHUNK_SIZE = 10;
+    const totalBatches = Math.ceil(unpersistedDocs.length / CHUNK_SIZE);
+
+    for (let i = 0; i < unpersistedDocs.length; i += CHUNK_SIZE) {
+      const slice = unpersistedDocs.slice(i, i + CHUNK_SIZE);
+      const batchIdx = Math.floor(i / CHUNK_SIZE) + 1;
+      const batch = writeBatch(fb.db);
+      for (const d of slice) {
+        const ref = doc(fb.db, 'questionBank', d.id);
+        batch.set(ref, {
+          subjectId: d.subjectId,
+          topic: d.topic,
+          subtopic: d.subtopic,
+          difficulty: d.difficulty,
+          type: 'single_choice',
+          question: d.question,
+          options: d.options,
+          correctIndex: d.correctIndex,
+          explanation: d.explanation,
+          status: 'draft',
+          fingerprint: d.fingerprint,
+          contentSignature: d.contentSignature,
+          source: 'imported',
+          ...(d.eventDate ? { eventDate: d.eventDate } : {}),
+          ...(d.verifiedSource ? { verifiedSource: d.verifiedSource } : {}),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          createdBy: currentUser.uid,
+        });
+      }
+
+      try {
+        await batch.commit();
+        newlyPersistedCount += slice.length;
+        markQuestionsSyncedToFirestore(slice.map((d) => d.id));
+        batchOutcomes.push({
+          batchIndex: batchIdx,
+          count: slice.length,
+          status: 'persisted',
+          questionIds: slice.map((d) => d.id),
+        });
+      } catch (err) {
+        failedCount += slice.length;
+        const errMsg = err instanceof Error ? err.message : String(err);
+        firestoreSyncWarning = recordNonFatalQuestionBankSyncWarning(
+          err,
+          OperationType.WRITE,
+          `questionBank (retry batch #${batchIdx})`,
+          fb.auth.currentUser
+        );
+        batchOutcomes.push({
+          batchIndex: batchIdx,
+          count: slice.length,
+          status: 'failed',
+          error: errMsg,
+          questionIds: slice.map((d) => d.id),
+        });
+      }
+
+      if (onProgress) {
+        onProgress({
+          currentBatch: batchIdx,
+          totalBatches,
+          persistedCount: alreadyPersistedCount + newlyPersistedCount,
+          failedCount,
+        });
+      }
+    }
+  } else {
+    failedCount = unpersistedDocs.length;
+    firestoreSyncWarning =
+      'Cloud Firestore is currently offline or unauthenticated. Cannot retry at this time.';
+  }
+
+  const finalPersisted = alreadyPersistedCount + newlyPersistedCount;
+  const finalPending = Math.max(0, validPreparedDocs.length - finalPersisted);
+
+  return {
+    totalDetected: summary.totalRecords,
+    validReadyCount: summary.validReadyCount,
+    rejectedCount: summary.rejectedCount,
+    importedCount: validPreparedDocs.length,
+    persistedToFirestoreCount: finalPersisted,
+    failedCount,
+    pendingCount: finalPending,
+    batchOutcomes,
+    firestoreSyncWarning,
+  };
 }
 
 /**
@@ -2473,14 +2718,26 @@ export async function apiAdminMigrateCuratedBankToFirestore(
 
   const fb = await getFirebaseServices();
   if (fb && fb.auth.currentUser && fb.auth.currentUser.uid === currentUser.uid) {
-    const { collection, getDocs, doc, writeBatch, serverTimestamp } =
+    const { collection, query, limit, startAfter, getDocs, doc, writeBatch, serverTimestamp } =
       fb.fbStoreMod;
 
-    // Fetch existing document IDs in questionBank so migration is 100% idempotent
+    // Fetch existing document IDs in questionBank with cursor-based pagination so migration is 100% idempotent
     const existingIds = new Set<string>();
     try {
-      const snap = await getDocs(collection(fb.db, 'questionBank'));
-      snap.docs.forEach((d: any) => existingIds.add(d.id));
+      let lastDoc: any = null;
+      let hasMore = true;
+      while (hasMore) {
+        const constraints: any[] = [limit(500)];
+        if (lastDoc) constraints.push(startAfter(lastDoc));
+        const q = query(collection(fb.db, 'questionBank'), ...constraints);
+        const snap = await getDocs(q);
+        snap.docs.forEach((d: any) => existingIds.add(d.id));
+        if (snap.docs.length < 500) {
+          hasMore = false;
+        } else {
+          lastDoc = snap.docs[snap.docs.length - 1];
+        }
+      }
       markQuestionsSyncedToFirestore(Array.from(existingIds));
     } catch {
       // Proceed with batch set if collection is empty

@@ -22,6 +22,7 @@ import {
   validateQuestionInput,
 } from '../utils/questionBankService';
 import {
+  BulkImportCommitResult,
   UserProfile,
   apiAdminCommitBulkImport,
   apiAdminCreateQuestion,
@@ -31,6 +32,7 @@ import {
   apiAdminMigrateCuratedBankToFirestore,
   apiAdminPublishAllDrafts,
   apiAdminPushUnsyncedQuestionsToFirestore,
+  apiAdminRetryBulkImport,
   apiAdminSyncQuestionBank,
   apiAdminUpdateQuestion,
 } from '../utils/apiService';
@@ -117,6 +119,15 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   const [importSummary, setImportSummary] =
     useState<BulkImportValidationSummary | null>(null);
   const [isCommittingImport, setIsCommittingImport] = useState(false);
+  const [bulkImportProgress, setBulkImportProgress] = useState<{
+    currentBatch: number;
+    totalBatches: number;
+    persistedCount: number;
+    failedCount: number;
+  } | null>(null);
+  const [bulkCommitResult, setBulkCommitResult] =
+    useState<BulkImportCommitResult | null>(null);
+  const [isRetryingImport, setIsRetryingImport] = useState(false);
   const [confirmDeleteBulkImported, setConfirmDeleteBulkImported] =
     useState<boolean>(false);
   const [isDeletingBulkImported, setIsDeletingBulkImported] =
@@ -492,6 +503,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     setImportRawText('');
     setImportParseError('');
     setImportSummary(null);
+    setBulkCommitResult(null);
+    setBulkImportProgress(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -625,6 +638,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   ) => {
     setImportParseError('');
     setImportSummary(null);
+    setBulkCommitResult(null);
+    setBulkImportProgress(null);
     if (!rawContent.trim()) {
       setImportParseError('Please upload a file or paste JSON/CSV records first.');
       return;
@@ -644,23 +659,45 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   const handleCommitBulkImportDrafts = async () => {
     if (!importSummary || importSummary.validReadyCount === 0) return;
     setIsCommittingImport(true);
+    setBulkImportProgress(null);
+    setBulkCommitResult(null);
     setStatusBanner(null);
     try {
-      const res = await apiAdminCommitBulkImport(importSummary, currentUser);
+      const res = await apiAdminCommitBulkImport(
+        importSummary,
+        currentUser,
+        (progress) => setBulkImportProgress(progress)
+      );
+      setBulkCommitResult(res);
       setDataRevision((r) => r + 1);
-      setStatusBanner({
-        type: res.firestoreSyncWarning ? 'info' : 'success',
-        text: res.firestoreSyncWarning
-          ? `Imported ${res.importedCount} validated questions as Drafts in the Admin Dashboard (${res.persistedToFirestoreCount} synced to Firestore). Note: ${res.firestoreSyncWarning}`
-          : `Imported ${res.importedCount} validated questions as Drafts for review (${res.persistedToFirestoreCount} synced to Firestore). Unreviewed bulk imports are never published automatically.`,
-      });
-      setImportSummary(null);
-      setImportRawText('');
-      setUploadedFileName('');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+
+      if (res.failedCount === 0 && res.persistedToFirestoreCount > 0) {
+        setStatusBanner({
+          type: 'success',
+          text: `All ${res.persistedToFirestoreCount} validated question(s) successfully persisted to Cloud Firestore as Drafts.`,
+        });
+        setImportSummary(null);
+        setImportRawText('');
+        setUploadedFileName('');
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        setActiveTab('review');
+      } else if (res.persistedToFirestoreCount > 0 && res.failedCount > 0) {
+        // Partial success: Never clear upload preview or raw input per Condition 8
+        setStatusBanner({
+          type: 'info',
+          text: `Partial Cloud Sync: ${res.persistedToFirestoreCount} persisted, ${res.failedCount} failed (${res.pendingCount} pending). Preview preserved below with retry option.`,
+        });
+      } else {
+        // Full failure: Never clear upload preview or raw input per Condition 8
+        setStatusBanner({
+          type: 'error',
+          text: res.firestoreSyncWarning
+            ? `Firestore Persistence Failed: ${res.firestoreSyncWarning}`
+            : `Failed to persist ${res.failedCount} question(s) to Cloud Firestore. Staged locally as drafts. You can retry below.`,
+        });
       }
-      setActiveTab('review');
     } catch (err) {
       setStatusBanner({
         type: 'error',
@@ -668,6 +705,50 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       });
     } finally {
       setIsCommittingImport(false);
+      setBulkImportProgress(null);
+    }
+  };
+
+  const handleRetryBulkImportDrafts = async () => {
+    if (!importSummary || importSummary.validReadyCount === 0) return;
+    setIsRetryingImport(true);
+    setBulkImportProgress(null);
+    setStatusBanner(null);
+    try {
+      const res = await apiAdminRetryBulkImport(
+        importSummary,
+        currentUser,
+        (progress) => setBulkImportProgress(progress)
+      );
+      setBulkCommitResult(res);
+      setDataRevision((r) => r + 1);
+
+      if (res.failedCount === 0 && res.pendingCount === 0) {
+        setStatusBanner({
+          type: 'success',
+          text: `Retry Successful: All ${res.persistedToFirestoreCount} questions are now confirmed in Cloud Firestore as Drafts!`,
+        });
+        setImportSummary(null);
+        setImportRawText('');
+        setUploadedFileName('');
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        setActiveTab('review');
+      } else {
+        setStatusBanner({
+          type: res.persistedToFirestoreCount > 0 ? 'info' : 'error',
+          text: `Retry Outcome: ${res.persistedToFirestoreCount} persisted, ${res.failedCount} failed (${res.pendingCount} pending). Review the failure details below.`,
+        });
+      }
+    } catch (err) {
+      setStatusBanner({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Retry failed.',
+      });
+    } finally {
+      setIsRetryingImport(false);
+      setBulkImportProgress(null);
     }
   };
 
@@ -881,13 +962,13 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
             <div className="bg-[#161d26] border border-[#232b35] rounded-lg p-4">
               <div className="font-mono text-xs text-[#8b96a3]">
-                Total Questions
+                Total Questions in Bank
               </div>
               <div className="font-mono text-2xl font-bold text-[#e6edf3] mt-1 tabular-nums">
                 {overviewStats.totalQuestions.toLocaleString()}
               </div>
               <div className="font-mono text-[11px] text-[#8b96a3] mt-1 tabular-nums">
-                target: {TARGET_TOTAL_QUESTIONS.toLocaleString()} total
+                <span className="text-[#00d9a0]">{overviewStats.firestoreConfirmedQuestions} cloud</span> · {overviewStats.localCuratedQuestions} curated · {overviewStats.pendingSyncQuestions} pending
               </div>
             </div>
 
@@ -899,7 +980,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 {overviewStats.publishedQuestions.toLocaleString()}
               </div>
               <div className="font-mono text-[11px] text-[#8b96a3] mt-1 tabular-nums">
-                {overviewStats.remainingTotalToTarget.toLocaleString()} needed for 9,000
+                {overviewStats.remainingTotalToTarget.toLocaleString()} needed for 9,000 target
               </div>
             </div>
 
@@ -911,8 +992,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 <div className="font-mono text-2xl font-bold text-[#ffb454] mt-1 tabular-nums">
                   {overviewStats.draftQuestions.toLocaleString()}
                 </div>
-                <div className="font-mono text-[11px] text-[#8b96a3] mt-1">
-                  hidden from students
+                <div className="font-mono text-[11px] text-[#8b96a3] mt-1 tabular-nums">
+                  {Math.max(0, overviewStats.draftQuestions - overviewStats.pendingSyncQuestions)} cloud drafts · {overviewStats.pendingSyncQuestions} pending local
                 </div>
               </div>
               {overviewStats.draftQuestions > 0 && (
@@ -1048,10 +1129,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                             type="button"
                             onClick={() => setOverviewTopicSubject(s.id)}
                             style={{ color: s.hex }}
-                            className="hover:underline cursor-pointer text-left"
+                            className="hover:underline cursor-pointer text-left block"
                           >
                             {s.label}
                           </button>
+                          <span className="text-[10px] text-[#8b96a3] font-normal">
+                            <span className="text-[#00d9a0]">{st.firestoreConfirmed} cloud</span> · {st.localCurated} curated
+                            {st.pendingSync > 0 ? ` · ${st.pendingSync} pending` : ''}
+                          </span>
                         </td>
                         <td className="py-2.5 px-3 text-right text-[#00d9a0] font-semibold tabular-nums">
                           {st.published}
@@ -1989,6 +2074,95 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           {/* Bulk Validation Summary & Preview Table */}
           {importSummary && (
             <div className="bg-[#161d26] border border-[#232b35] rounded-lg p-5 space-y-4">
+              {/* Active Upload Progress Bar */}
+              {bulkImportProgress && (
+                <div className="p-3.5 bg-[#12181f] border border-[#00d9a0]/40 rounded-lg space-y-2 font-mono text-xs">
+                  <div className="flex items-center justify-between text-[#e6edf3]">
+                    <span className="font-bold">
+                      Firestore Sync: Batch {bulkImportProgress.currentBatch} of {bulkImportProgress.totalBatches} (Chunks of 10)
+                    </span>
+                    <span className="tabular-nums text-[#00d9a0]">
+                      {bulkImportProgress.persistedCount} persisted · {bulkImportProgress.failedCount} failed
+                    </span>
+                  </div>
+                  <div className="w-full bg-[#161d26] h-2 rounded-full overflow-hidden border border-[#232b35]">
+                    <div
+                      className="bg-[#00d9a0] h-full transition-all duration-200"
+                      style={{
+                        width: `${Math.round(
+                          (bulkImportProgress.currentBatch / Math.max(1, bulkImportProgress.totalBatches)) * 100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Upload & Persistence Outcome Report */}
+              {bulkCommitResult && (
+                <div className="p-4 rounded-lg border border-[#232b35] bg-[#12181f] space-y-3 font-mono text-xs">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="font-bold text-[#e6edf3] text-sm">
+                      Upload &amp; Persistence Status Report
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {(bulkCommitResult.failedCount > 0 || bulkCommitResult.pendingCount > 0) && (
+                        <button
+                          type="button"
+                          disabled={isRetryingImport || isCommittingImport}
+                          onClick={handleRetryBulkImportDrafts}
+                          className="bg-[#ffb454] hover:bg-[#ffc475] text-[#04140f] font-mono font-bold text-xs px-3.5 py-1.5 rounded cursor-pointer transition-colors disabled:opacity-40"
+                        >
+                          {isRetryingImport
+                            ? 'retrying unsynced batches…'
+                            : `retry ${bulkCommitResult.pendingCount || bulkCommitResult.failedCount} unpersisted records`}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-1 tabular-nums">
+                    <div className="bg-[#161d26] p-2.5 rounded border border-[#232b35]">
+                      <div className="text-[10px] text-[#8b96a3]">Total Detected</div>
+                      <div className="text-sm font-bold text-[#e6edf3]">{bulkCommitResult.totalDetected}</div>
+                    </div>
+                    <div className="bg-[#161d26] p-2.5 rounded border border-[#232b35]">
+                      <div className="text-[10px] text-[#8b96a3]">Valid Records</div>
+                      <div className="text-sm font-bold text-[#00d9a0]">{bulkCommitResult.validReadyCount}</div>
+                    </div>
+                    <div className="bg-[#161d26] p-2.5 rounded border border-[#232b35]">
+                      <div className="text-[10px] text-[#8b96a3]">Rejected Validation</div>
+                      <div className="text-sm font-bold text-[#ff6b6b]">{bulkCommitResult.rejectedCount}</div>
+                    </div>
+                    <div className="bg-[#161d26] p-2.5 rounded border border-[#232b35]">
+                      <div className="text-[10px] text-[#8b96a3]">Persisted in Cloud</div>
+                      <div className="text-sm font-bold text-[#00d9a0]">{bulkCommitResult.persistedToFirestoreCount}</div>
+                    </div>
+                    <div className="bg-[#161d26] p-2.5 rounded border border-[#232b35]">
+                      <div className="text-[10px] text-[#8b96a3]">Failed Cloud Sync</div>
+                      <div className="text-sm font-bold text-[#ff6b6b]">{bulkCommitResult.failedCount}</div>
+                    </div>
+                    <div className="bg-[#161d26] p-2.5 rounded border border-[#232b35]">
+                      <div className="text-[10px] text-[#8b96a3]">Pending Sync</div>
+                      <div className="text-sm font-bold text-[#ffb454]">{bulkCommitResult.pendingCount}</div>
+                    </div>
+                  </div>
+
+                  {bulkCommitResult.batchOutcomes.some((b) => b.status === 'failed') && (
+                    <div className="p-3 bg-[#ff6b6b]/10 border border-[#ff6b6b]/40 rounded-lg space-y-1 text-[#ff6b6b] text-[11px]">
+                      <div className="font-bold">Failed Batch Details:</div>
+                      {bulkCommitResult.batchOutcomes
+                        .filter((b) => b.status === 'failed')
+                        .map((b) => (
+                          <div key={b.batchIndex}>
+                            • Batch #{b.batchIndex} ({b.count} questions): {b.error || 'Firestore write rejected'}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-[#232b35]">
                 <div>
                   <h3 className="font-mono text-sm font-bold text-[#e6edf3]">
@@ -2038,70 +2212,103 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                       download rejected error report (.json)
                     </button>
                   )}
-                  <button
-                    type="button"
-                    disabled={
-                      importSummary.validReadyCount === 0 || isCommittingImport
-                    }
-                    onClick={handleCommitBulkImportDrafts}
-                    className="bg-[#00d9a0] hover:bg-[#00e6aa] text-[#04140f] font-mono font-bold text-xs px-4 py-2 rounded-lg cursor-pointer disabled:opacity-40"
-                  >
-                    {isCommittingImport
-                      ? 'importing drafts…'
-                      : `stage ${importSummary.validReadyCount} valid records into review queue (draft)`}
-                  </button>
+                  {bulkCommitResult && (bulkCommitResult.failedCount > 0 || bulkCommitResult.pendingCount > 0) ? (
+                    <button
+                      type="button"
+                      disabled={isRetryingImport || isCommittingImport}
+                      onClick={handleRetryBulkImportDrafts}
+                      className="bg-[#ffb454] hover:bg-[#ffc475] text-[#04140f] font-mono font-bold text-xs px-4 py-2 rounded-lg cursor-pointer disabled:opacity-40"
+                    >
+                      {isRetryingImport
+                        ? 'retrying unsynced batches…'
+                        : `retry ${bulkCommitResult.pendingCount || bulkCommitResult.failedCount} unpersisted records (drafts)`}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={
+                        importSummary.validReadyCount === 0 || isCommittingImport
+                      }
+                      onClick={handleCommitBulkImportDrafts}
+                      className="bg-[#00d9a0] hover:bg-[#00e6aa] text-[#04140f] font-mono font-bold text-xs px-4 py-2 rounded-lg cursor-pointer disabled:opacity-40"
+                    >
+                      {isCommittingImport
+                        ? 'importing drafts…'
+                        : `stage ${importSummary.validReadyCount} valid records into review queue (draft)`}
+                    </button>
+                  )}
                 </div>
               </div>
 
               <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-                {importSummary.rows.map((r) => (
-                  <div
-                    key={r.rowIndex}
-                    className={`p-3 rounded-lg border font-mono text-xs ${
-                      r.valid
-                        ? r.warnings.length > 0
-                          ? 'border-[#ffb454]/40 bg-[#ffb454]/5'
-                          : 'border-[#00d9a0]/30 bg-[#12181f]'
-                        : 'border-[#ff6b6b]/40 bg-[#ff6b6b]/5'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="font-bold text-[#e6edf3]">
-                        Row #{r.rowIndex} ·{' '}
-                        {String(r.rawRecord.subjectId || 'unknown')} ·{' '}
-                        {String(r.rawRecord.topic || 'no-topic')}
-                      </span>
-                      <span
-                        className={
-                          r.valid
-                            ? r.warnings.length > 0
-                              ? 'text-[#ffb454] font-bold'
-                              : 'text-[#00d9a0] font-bold'
-                            : 'text-[#ff6b6b] font-bold'
-                        }
-                      >
-                        {r.valid
-                          ? r.warnings.length > 0
-                            ? 'VALID (WITH SIMILARITY WARNING) → DRAFT'
-                            : 'VALID → DRAFT'
-                          : 'REJECTED'}
-                      </span>
-                    </div>
-                    <div className="text-[#c9d3df] mb-1">
-                      {String(r.rawRecord.question || '(empty question)')}
-                    </div>
-                    {r.errors.map((e, i) => (
-                      <div key={i} className="text-[#ff6b6b] text-[11px]">
-                        ✗ Error: {e}
+                {importSummary.rows.map((r) => {
+                  const isSynced = r.preparedDoc
+                    ? isQuestionSyncedToFirestore(r.preparedDoc.id)
+                    : false;
+
+                  return (
+                    <div
+                      key={r.rowIndex}
+                      className={`p-3 rounded-lg border font-mono text-xs ${
+                        r.valid
+                          ? isSynced
+                            ? 'border-[#00d9a0]/50 bg-[#00d9a0]/5'
+                            : r.warnings.length > 0
+                              ? 'border-[#ffb454]/40 bg-[#ffb454]/5'
+                              : 'border-[#00d9a0]/30 bg-[#12181f]'
+                          : 'border-[#ff6b6b]/40 bg-[#ff6b6b]/5'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                        <span className="font-bold text-[#e6edf3]">
+                          Row #{r.rowIndex} ·{' '}
+                          {String(r.rawRecord.subjectId || 'unknown')} ·{' '}
+                          {String(r.rawRecord.topic || 'no-topic')}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {isSynced && (
+                            <span className="text-[#00d9a0] font-bold">
+                              ✓ PERSISTED IN FIRESTORE (DRAFT)
+                            </span>
+                          )}
+                          {!isSynced && r.valid && bulkCommitResult && (
+                            <span className="text-[#ffb454] font-bold">
+                              STAGED LOCALLY (PENDING CLOUD SYNC)
+                            </span>
+                          )}
+                          <span
+                            className={
+                              r.valid
+                                ? r.warnings.length > 0
+                                  ? 'text-[#ffb454] font-semibold'
+                                  : 'text-[#00d9a0] font-semibold'
+                                : 'text-[#ff6b6b] font-bold'
+                            }
+                          >
+                            {r.valid
+                              ? r.warnings.length > 0
+                                ? 'VALID (SIMILARITY WARNING)'
+                                : 'VALID'
+                              : 'REJECTED'}
+                          </span>
+                        </div>
                       </div>
-                    ))}
-                    {r.warnings.map((w, i) => (
-                      <div key={i} className="text-[#ffb454] text-[11px]">
-                        ⚠ Warning: {w}
+                      <div className="text-[#c9d3df] mb-1">
+                        {String(r.rawRecord.question || '(empty question)')}
                       </div>
-                    ))}
-                  </div>
-                ))}
+                      {r.errors.map((e, i) => (
+                        <div key={i} className="text-[#ff6b6b] text-[11px]">
+                          ✗ Error: {e}
+                        </div>
+                      ))}
+                      {r.warnings.map((w, i) => (
+                        <div key={i} className="text-[#ffb454] text-[11px]">
+                          ⚠ Warning: {w}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
